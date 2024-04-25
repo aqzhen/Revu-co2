@@ -1,10 +1,10 @@
-import OpenAI from "openai";
-import { User } from "../../globals";
-import { DataSource } from "typeorm";
 import fs from "fs";
-import { SqlDatabase } from "langchain/sql_db";
 import { SqlToolkit } from "langchain/agents/toolkits/sql";
+import { SqlDatabase } from "langchain/sql_db";
 import mysql from "mysql2/promise";
+import OpenAI from "openai";
+import { DataSource } from "typeorm";
+import { User } from "../../globals";
 
 export function generateTableData(user: User): any[][] {
   const tableData: any[][] = [];
@@ -65,7 +65,7 @@ export async function generateEmbedding(body: string) {
 export async function initializeDBconnections() {
   console.log("Connecting to SingleStore");
   try {
-    singleStoreConnection = await mysql.createConnection({
+    let singleStoreConnection = await mysql.createConnection({
       host: process.env.SINGLESTORE_HOST,
       user: process.env.SINGLESTORE_USER,
       port: 3333,
@@ -76,6 +76,7 @@ export async function initializeDBconnections() {
       },
     });
     console.log("You have successfully connected to SingleStore.");
+    global.singleStoreConnection = singleStoreConnection;
   } catch (err) {
     console.error("ERROR", err);
     process.exit(1);
