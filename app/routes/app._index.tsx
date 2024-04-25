@@ -14,13 +14,14 @@ import { getProducts } from "../backend/api_calls";
 import { parseReviewsData } from "../metafield_parsers/judge";
 import { authenticate } from "../shopify.server";
 // import { addReviewsToDatabase } from "./backend/prisma/helpers";
+import { initializeCatalogSearchAgent } from "~/backend/langchain/agents/catalogSearchAgent";
+import { createAllTables } from "~/backend/vectordb/create";
+import { getAllUsers } from "~/backend/vectordb/get";
+import { initializeDBconnections } from "~/backend/vectordb/misc";
+import { updatePurchasedStatus } from "~/backend/vectordb/update";
 import { initializeProductAgent } from "../backend/langchain/agents/productAgent";
 import { Chunk } from "../backend/langchain/chunking";
-import { getAllUsers } from "~/backend/vectordb/get";
-import { updatePurchasedStatus } from "~/backend/vectordb/update";
-import { createAllTables } from "~/backend/vectordb/create";
 import { Category, Query, Review, ReviewPrompt, User } from "../globals";
-import { initializeDBconnections } from "~/backend/vectordb/misc";
 
 // trigger action to get reviews
 const initializeReviews = async (
@@ -90,12 +91,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   await createAllTables(false);
   await updatePurchasedStatus();
   await initializeProductAgent();
+  await initializeCatalogSearchAgent();
   const reviewsHashmap = await initializeReviews(domain, false);
 
   const { allUsersData, tableDataMap, usersMap } = await getAllUsers();
 
   console.log("Loading products");
   const productData = await (await getProducts()).json();
+  // addAllProducts();
 
   return {
     reviewsHashmap,

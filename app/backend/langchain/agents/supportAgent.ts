@@ -8,12 +8,11 @@ import { json } from "@remix-run/node";
 import { AgentExecutor, createOpenAIToolsAgent } from "langchain/agents";
 import { AIMessage } from "langchain/schema";
 import { SqlDatabase } from "langchain/sql_db";
-import { prefix, suffix } from "./productAgentPrompt";
-import { call_ReviewsLLM } from "../queryReviewsLLM";
 import {
-  addCustomerSupportCorpusChunksToSingleStore,
-  addCustomerSupportQueryToSinglestore,
+  addCustomerSupportQueryToSinglestore
 } from "~/backend/vectordb/add";
+import { call_ReviewsLLM } from "../queryReviewsLLM";
+import { prefix, suffix } from "./productAgentPrompt";
 
 let executor: AgentExecutor;
 const llm = new ChatOpenAI({
@@ -47,7 +46,7 @@ export async function initialize_support_agent() {
       agent: runnableAgent,
       tools,
       returnIntermediateSteps: true,
-      verbose: true,
+      verbose: false,
       // memory: memory,
     });
   } catch (err) {

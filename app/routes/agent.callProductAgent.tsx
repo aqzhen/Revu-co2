@@ -1,4 +1,5 @@
 import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
+import { callCatalogSearchAgent } from "~/backend/langchain/agents/catalogSearchAgent";
 import { callProductAgent } from "~/backend/langchain/agents/productAgent";
 import { authenticate } from "~/shopify.server";
 
@@ -20,6 +21,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (session) {
     console.log(session);
   }
+
+  callCatalogSearchAgent(-1, productId, agentQuery, JSON.parse(userMode));
 
   return callProductAgent(
     customerId,

@@ -12,9 +12,9 @@ import {
   addQueryToSingleStore,
   addSellerQueryToSingleStore,
 } from "~/backend/vectordb/add";
-import { prefix, suffix } from "./productAgentPrompt";
 import { queryProductDescription } from "../queryProductDescriptionLLM";
 import { call_ReviewsLLM } from "../queryReviewsLLM";
+import { prefix, suffix } from "./productAgentPrompt";
 
 let executor: AgentExecutor;
 const llm = new ChatOpenAI({
@@ -48,7 +48,7 @@ export async function initializeProductAgent() {
       agent: runnableAgent,
       tools,
       returnIntermediateSteps: true,
-      verbose: true,
+      verbose: false,
       // memory: memory,
     });
   } catch (err) {

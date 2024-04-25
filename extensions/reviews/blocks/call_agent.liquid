@@ -56,7 +56,7 @@
        
         const data = { customerId: customerId, productId: productId, agentQuery: value, userMode: false, tableToQuery: "Review", caller: "user"};
 
-        const response = await fetch('/apps/my_app/agent', {
+        const response = await fetch('/apps/my_app/agent/callProductAgent', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

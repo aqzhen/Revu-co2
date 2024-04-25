@@ -8,6 +8,7 @@ export async function getProducts() {
           edges {
             node {
               id
+              description
               title
               images (first: 1) {
                 edges {

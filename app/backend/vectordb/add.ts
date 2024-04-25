@@ -1,8 +1,47 @@
 import { Review } from "../../globals";
+import { getProducts } from "../api_calls";
 import { chunk_string } from "../langchain/chunking";
 import { generateEmbedding } from "./misc";
 
 // Adders
+export async function insertProduct(
+  productId: number,
+  title: string,
+  description: string,
+): Promise<void> {
+  try {
+    const pdEmbedding = await generateEmbedding(description);
+    await singleStoreConnection.execute(
+      `
+      INSERT IGNORE INTO Products (
+          productId,
+          title,
+          description,
+          embedding
+      ) VALUES (
+          ${productId},
+          '${title.replace(/'/g, "\\'")}',
+          '${description.replace(/'/g, "\\'")}',
+          '${pdEmbedding}'
+      )
+    `,
+    );
+    console.log("Product added successfully.");
+    console.log(productId, title, description);
+  } catch (err) {
+    console.error("ERROR", err);
+    process.exit(1);
+  }
+}
+
+export async function addAllProducts() {
+  const productData = await (await ((getProducts()))).json();
+  productData.products.map(async (edge: any) => {
+    let id : number = Number(edge?.node?.id.replace("gid://shopify/Product/", ""))
+    await insertProduct(id, edge?.node?.title, edge?.node?.description);
+  })
+}
+
 export async function addReviewChunksToSingleStore(
   reviews: Review[]
 ): Promise<void> {

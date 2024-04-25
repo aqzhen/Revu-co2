@@ -24,6 +24,27 @@ export async function createReviewTable(deleteExisting: boolean) {
   }
 }
 
+export async function createProductsTable(deleteExistingReviews: boolean) {
+  try {
+    if (deleteExistingReviews) {
+      console.log("Dropping products table");
+
+      await singleStoreConnection.execute("DROP TABLE IF EXISTS Products");
+    }
+    await singleStoreConnection.execute(`
+                CREATE TABLE Products (
+                    productId BIGINT PRIMARY KEY,
+                    title TEXT,
+                    description TEXT,
+                    embedding VECTOR(768)
+                )
+            `);
+    console.log("Products table created successfully.");
+  } catch (err) {
+    console.log("Products table already exists");
+  }
+}
+
 export async function createQueriesTable(deleteExisting: boolean) {
   try {
     if (deleteExisting) {
@@ -178,4 +199,5 @@ export async function createAllTables(deleteExisting: boolean) {
   createQueriesTable(deleteExisting);
   createReviewTable(deleteExisting);
   createSellerQueriesTable(deleteExisting);
+  createProductsTable(deleteExisting);
 }
