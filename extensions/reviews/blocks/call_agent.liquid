@@ -1,0 +1,198 @@
+<div id="resizableContainer" style="display: flex; align-items: center; justify-content: center; flex-direction: column; background-color: #f5f5f5; padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); position: fixed; bottom: 50px; right: 20px; max-height: 80vh; overflow-y: auto; z-index: 9999;">
+    <input id="myInput" type="text" placeholder="Enter a query" style="margin-bottom: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+    <button id="myButton" style="padding: 10px 20px; background-color: #007bff; color: #fff; border: none; border-radius: 5px; cursor: pointer;">Call Agent</button>
+    <div>
+        <div id="firstDiv" style="border: 1px solid #ccc; padding: 10px; border-radius: 5px; margin-bottom: 10px; ">
+            <p id="prompt"></p>
+            <p id="pd_output"></p>
+            <p id="output"></p>
+        </div>
+        <div id="relevant-reviews">
+        </div>
+    </div>
+    <button id="toggleButton" style="padding: 5px 10px; background-color: #007bff; color: #fff; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">Toggle</button>
+</div>
+
+<script>
+    const resizableContainer = document.querySelector('#resizableContainer');
+    const toggleButton = document.querySelector('#toggleButton');
+    const firstDiv = document.querySelector('#firstDiv');
+    const secondDiv = document.querySelector('div[style*="max-height: 80vh;"]');
+    const relevantReviewsDiv = document.querySelector('#relevant-reviews');
+    const originalHeight = secondDiv.style.maxHeight;
+    let isMinimized = false;
+
+    let tempRelevantInnerHTML = relevantReviewsDiv.innerHTML;
+    let tempFirstInnerHTML = firstDiv.innerHTML;
+
+    toggleButton.addEventListener('click', function() {
+        if (isMinimized) {
+            secondDiv.style.maxHeight = originalHeight;
+            resizableContainer.style.height = 'auto';
+            firstDiv.innerHTML = tempFirstInnerHTML;
+            relevantReviewsDiv.innerHTML = tempRelevantInnerHTML;
+            isMinimized = false;
+        } else {
+            tempRelevantInnerHTML = relevantReviewsDiv.innerHTML;
+            tempFirstInnerHTML = firstDiv.innerHTML;
+            relevantReviewsDiv.innerHTML = ''; // Clear the contents of the relevant-reviews div
+            firstDiv.innerHTML = '<p id="prompt"></p><p id="output"></p><p id="pd_output"></p>'; // Clear the contents of the firstDiv
+            resizableContainer.style.height = 'fit-content';
+            isMinimized = true;
+        }
+    });
+</script>
+
+
+<script>
+    const button = document.querySelector('#myButton');
+    const customerId = {{customer.id | json}};
+    const productId = {{product.id | json}};
+    button.addEventListener('click', async function(event) {
+        event.preventDefault();
+        const input = document.querySelector('#myInput');
+        const value = input.value;
+        console.log("Button clicked with value:", value);
+       
+        const data = { customerId: customerId, productId: productId, agentQuery: value, userMode: false, tableToQuery: "Review", caller: "user"};
+
+        const response = await fetch('/apps/my_app/agent', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+
+        if (true) {
+            const responseData = await response.json();
+            // const responseData = {
+            //     "prompt": "is this a good board for beginners?",
+            //     "sqlQuery": "SELECT Review.reviewId, Embeddings.chunkNumber, DOT_PRODUCT(Embeddings.chunkEmbedding, Query.semanticEmbedding) AS similarity_score FROM Review CROSS JOIN (SELECT semanticEmbedding FROM Queries WHERE queryId = 1125899906842663) AS Query JOIN Embeddings ON Review.reviewId = Embeddings.reviewId WHERE Review.productId = 9064572584236 ORDER BY similarity_score DESC LIMIT 25",
+            //     "result": "[{\"reviewId\":\"541402859\",\"chunkNumber\":\"7\",\"similarity_score\":0.6162167191505432},{\"reviewId\":\"559358795\",\"chunkNumber\":\"1\",\"similarity_score\":0.5675077438354492},{\"reviewId\":\"541402859\",\"chunkNumber\":\"6\",\"similarity_score\":0.5313129425048828},{\"reviewId\":\"541402859\",\"chunkNumber\":\"4\",\"similarity_score\":0.5270801186561584},{\"reviewId\":\"541402859\",\"chunkNumber\":\"5\",\"similarity_score\":0.5100563168525696},{\"reviewId\":\"541403433\",\"chunkNumber\":\"4\",\"similarity_score\":0.4970254898071289},{\"reviewId\":\"541402859\",\"chunkNumber\":\"3\",\"similarity_score\":0.48070865869522095},{\"reviewId\":\"541402777\",\"chunkNumber\":\"7\",\"similarity_score\":0.46865275502204895},{\"reviewId\":\"541400473\",\"chunkNumber\":\"5\",\"similarity_score\":0.46468254923820496},{\"reviewId\":\"541402859\",\"chunkNumber\":\"2\",\"similarity_score\":0.4603654742240906},{\"reviewId\":\"541401162\",\"chunkNumber\":\"10\",\"similarity_score\":0.4475940763950348},{\"reviewId\":\"541402777\",\"chunkNumber\":\"6\",\"similarity_score\":0.44403091073036194},{\"reviewId\":\"541401162\",\"chunkNumber\":\"4\",\"similarity_score\":0.4402925372123718},{\"reviewId\":\"541401450\",\"chunkNumber\":\"3\",\"similarity_score\":0.4373763203620911},{\"reviewId\":\"541400473\",\"chunkNumber\":\"9\",\"similarity_score\":0.43698692321777344},{\"reviewId\":\"541403433\",\"chunkNumber\":\"10\",\"similarity_score\":0.4361833333969116},{\"reviewId\":\"541402777\",\"chunkNumber\":\"1\",\"similarity_score\":0.42992305755615234},{\"reviewId\":\"541402777\",\"chunkNumber\":\"3\",\"similarity_score\":0.4289529025554657},{\"reviewId\":\"541402597\",\"chunkNumber\":\"3\",\"similarity_score\":0.427096039056778},{\"reviewId\":\"541402859\",\"chunkNumber\":\"1\",\"similarity_score\":0.42250657081604},{\"reviewId\":\"541401162\",\"chunkNumber\":\"6\",\"similarity_score\":0.4183912873268128},{\"reviewId\":\"541402597\",\"chunkNumber\":\"4\",\"similarity_score\":0.4133223593235016},{\"reviewId\":\"541402777\",\"chunkNumber\":\"2\",\"similarity_score\":0.4057558476924896},{\"reviewId\":\"541410439\",\"chunkNumber\":\"8\",\"similarity_score\":0.4049195945262909},{\"reviewId\":\"541403906\",\"chunkNumber\":\"2\",\"similarity_score\":0.4043036699295044}]",
+            //     "error": "",
+            //     "output": "Based on the reviews provided, the Burton Custom Snowboard seems to be a good choice for beginners. \n\n1. Reviewer with ID 5965716979801 mentions that as a beginner, they found learning to snowboard a breeze with the Burton Custom Snowboard. The edge control was intuitive, the board felt stable, and the forgiving flex helped cushion falls and find balance (ReviewID: 541402859).\n\n2. Another reviewer with the same ID also upgraded to the Burton Custom Snowboard as a relatively new snowboarder and was impressed with the performance. They found the edge control solid, stability and balance improved, and the flex suitable for beginners (ReviewID: 541402777).\n\n3. A different reviewer who identified themselves as a beginner also found the Burton Custom Snowboard to be a nice board for beginners and did not notice any significant handling issues mentioned by others (ReviewID: 559358795).\n\nOverall, based on these reviews, it appears that the Burton Custom Snowboard is indeed a good choice for beginners looking to improve their snowboarding skills."
+            // };
+            console.log("API response:", responseData);
+            // Parse the response data here
+            const prompt = responseData.prompt;
+            const sqlQuery = responseData.sqlQuery;
+            const result = responseData.result;
+            const error = responseData.error;
+            const output = responseData.output;
+            const pd_output = responseData.productDescriptionOutput;
+
+            const uniqueReviewIds = [...new Set(JSON.parse(result).map(item => item.reviewId))];
+             
+            let reviews = [];
+            async function fetchReviewData(reviewId) {
+                const data = { reviewId: reviewId };
+                const response = await fetch('/apps/my_app/reviews/fetchOne', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                if (response.ok) {
+                    const responseData = await response.json();
+                    console.log("Judge API response:", responseData);
+
+                    const reviewRating = responseData.review.rating;
+                    const reviewTitle = responseData.review.title;
+                    const reviewBody = responseData.review.body;
+
+                    return { reviewId: reviewId, reviewRating: reviewRating, reviewTitle: reviewTitle, reviewBody: reviewBody };
+                } else {
+                    console.error("API call failed with status:", response.status);
+                    return null;
+                }
+            }
+
+            async function fetchReviews() {
+                const reviewPromises = uniqueReviewIds.map(async (reviewId) => {
+                    return await fetchReviewData(reviewId);
+                });
+
+                const fetchedReviews = await Promise.all(reviewPromises);
+                const filteredReviews = fetchedReviews.filter(review => review !== null);
+
+                console.log("reviews");
+                console.log(filteredReviews);
+
+                return filteredReviews;
+            }
+
+            (async () => {
+                reviews = await fetchReviews();
+
+                let relevantReviews = reviews.map(review => `${review.reviewTitle}\n${review.reviewBody}\nRating: ${review.reviewRating}\n`).join("\n");
+
+                console.log(reviews.length);
+                // Pass the data to frontend
+                const promptElement = document.querySelector('#prompt');
+                const outputElement = document.querySelector('#output');
+                const relevantReviewsElement = document.querySelector('#relevant-reviews');
+
+                // Create a container for each review
+                const reviewContainers = reviews.map(review => {
+                    const container = document.createElement('div');
+                    container.classList.add('review-container');
+
+                    const titleElement = document.createElement('h3');
+                    titleElement.textContent = review.reviewTitle;
+                    container.appendChild(titleElement);
+
+                    const bodyElement = document.createElement('p');
+                    bodyElement.textContent = review.reviewBody;
+                    container.appendChild(bodyElement);
+
+                    const ratingElement = document.createElement('p');
+                    ratingElement.textContent = `Rating: ${review.reviewRating}`;
+                    container.appendChild(ratingElement);
+
+                    return container;
+                });
+
+                // Append the review containers to the relevant reviews element
+                reviewContainers.forEach(container => {
+                    relevantReviewsElement.appendChild(container);
+                });
+
+                // Apply CSS styles to make the containers scrollable
+                relevantReviewsElement.style.overflow = 'auto';
+                relevantReviewsElement.style.maxHeight = '300px';
+                isMinimized = false;
+                minimizeButton.textContent = 'Minimize';
+
+                promptElement.innerHTML = prompt;
+                outputElement.innerHTML = output;
+            })();
+            let relevantReviews = reviews.map(review => `${review.reviewTitle}\n${review.reviewBody}\nRating: ${review.reviewRating}\n`).join("\n");
+
+
+            console.log(reviews.length);
+            // Pass the data to frontend
+            const promptElement = document.querySelector('#prompt');
+            const outputElement = document.querySelector('#output');
+            const productDescriptionOutputElement = document.querySelector('#pd_output');
+            const relevantReviewsElement = document.querySelector('#relevant-reviews');
+
+            promptElement.innerHTML = prompt;
+            outputElement.innerHTML = output;
+            productDescriptionOutputElement.innerHTML = pd_output;
+            relevantReviewsElement.innerHTML = relevantReviews;
+        } else {
+            console.error("API call failed with status:", response.status);
+        }
+    });
+</script>
+
+{% schema %}
+{
+    "name": "Call Agent",
+    "target": "section",
+    "settings": []
+}
+{% endschema %}

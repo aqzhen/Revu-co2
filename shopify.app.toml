@@ -1,0 +1,28 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "a8d41cf7b58fa8f22eed09853a553923"
+name = "Revu"
+application_url = "https://frederick-panasonic-tale-trust.trycloudflare.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "quickstart-92f03812.myshopify.com"
+include_config_on_deploy = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_customers,read_orders,read_products,write_customers"
+
+[auth]
+redirect_urls = [
+  "https://frederick-panasonic-tale-trust.trycloudflare.com/auth/callback",
+  "https://frederick-panasonic-tale-trust.trycloudflare.com/auth/shopify/callback",
+  "https://frederick-panasonic-tale-trust.trycloudflare.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2024-01"
+
+[pos]
+embedded = false

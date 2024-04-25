@@ -1,0 +1,37 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:dev.sqlite"
+}
+
+model Session {
+  id          String    @id
+  shop        String
+  state       String
+  isOnline    Boolean   @default(false)
+  scope       String?
+  expires     DateTime?
+  accessToken String
+  userId      BigInt?
+}
+
+model Review {
+  productId         BigInt
+  reviewId          BigInt
+  reviewerName      String
+  reviewerExternalId BigInt
+  createdAt         DateTime
+  updatedAt         DateTime
+  verified          String
+  rating            Int
+  title             String
+  body              String
+
+  @@id([productId, reviewId])
+}
