@@ -5,19 +5,16 @@ import {
 } from "@langchain/core/prompts";
 import { ChatOpenAI } from "@langchain/openai";
 import { json } from "@remix-run/node";
-import fs from "fs";
 import { AgentExecutor, createOpenAIToolsAgent } from "langchain/agents";
-import { SqlToolkit } from "langchain/agents/toolkits/sql";
 import { AIMessage } from "langchain/schema";
 import { SqlDatabase } from "langchain/sql_db";
-import { DataSource } from "typeorm";
 import {
   addQueryToSingleStore,
   addSellerQueryToSingleStore,
-} from "../vectordb/helpers";
-import { prefix, suffix } from "./agentPrompt";
-import { queryProductDescription } from "./queryProductDescriptionLLM";
-import { call_LLM } from "./queryReviewsLLM";
+} from "~/backend/vectordb/add";
+import { prefix, suffix } from "./productAgentPrompt";
+import { queryProductDescription } from "../queryProductDescriptionLLM";
+import { call_ReviewsLLM } from "../queryReviewsLLM";
 
 let executor: AgentExecutor;
 const llm = new ChatOpenAI({
@@ -25,25 +22,8 @@ const llm = new ChatOpenAI({
 });
 let db: SqlDatabase;
 
-export async function initialize_agent() {
+export async function initializeProductAgent() {
   try {
-    const dataSource = new DataSource({
-      type: "mysql",
-      host: process.env.SINGLESTORE_HOST,
-      port: 3333,
-      username: process.env.SINGLESTORE_USER,
-      password: process.env.SINGLESTORE_PASSWORD,
-      database: process.env.SINGLESTORE_DATABASE,
-      ssl: {
-        ca: fs.readFileSync("./singlestore_bundle.pem"),
-      },
-    });
-    db = await SqlDatabase.fromDataSourceParams({
-      appDataSource: dataSource,
-    });
-    const toolkit = new SqlToolkit(db);
-    const tools = toolkit.getTools();
-
     const prompt = ChatPromptTemplate.fromMessages([
       ["system", prefix],
       // new MessagesPlaceholder("chat_history"),
@@ -76,12 +56,12 @@ export async function initialize_agent() {
   }
 }
 
-export async function call_agent(
+export async function callProductAgent(
   customerId: number = -1,
   productId: number = -1,
   query: string,
   isSeller: boolean = false,
-  tableToQuery: string,
+  tableToQuery: string
 ) {
   let response = {
     prompt: query,
@@ -103,14 +83,14 @@ export async function call_agent(
         productId,
         customerId,
         "TEST ANSWER",
-        query,
+        query
       );
     } else {
       sellerQueryId = await addSellerQueryToSingleStore(
         productId,
         customerId,
         "TEST ANSWER",
-        query,
+        query
       );
     }
 
@@ -130,17 +110,21 @@ export async function call_agent(
           productId,
       });
     } else if (sellerQueryId !== undefined) {
-      result = await executor.invoke({
-        input:
-          "SellerQueryId: " +
-          sellerQueryId +
-          ". Query the " +
-          tableToQuery +
-          " table. " +
-          query +
-          "for productId " +
-          productId,
-      }).catch((err) => { console.error(err); });
+      result = await executor
+        .invoke({
+          input:
+            "SellerQueryId: " +
+            sellerQueryId +
+            ". Query the " +
+            tableToQuery +
+            " table. " +
+            query +
+            "for productId " +
+            productId,
+        })
+        .catch((err) => {
+          console.error(err);
+        });
     }
 
     // TODO: Figure out if we can save tokens here by not returning all intermediate steps
@@ -153,22 +137,27 @@ export async function call_agent(
         }
       });
       console.log(
-        `Intermediate steps ${JSON.stringify(result.intermediateSteps, null, 2)}`,
+        `Intermediate steps ${JSON.stringify(result.intermediateSteps, null, 2)}`
       );
     }
 
-    const llmOutput = await call_LLM(
+    const llmOutput = await call_ReviewsLLM(
       response.result as unknown as string,
       llm,
       db,
-      query,
+      query
     );
 
-    const productDescriptionOutput = await queryProductDescription(llm, query, productId);
-    
+    const productDescriptionOutput = await queryProductDescription(
+      llm,
+      query,
+      productId
+    );
+
     response.output = llmOutput as string;
-    response.productDescriptionOutput = productDescriptionOutput.productDescriptionOutput;
-    
+    response.productDescriptionOutput =
+      productDescriptionOutput.productDescriptionOutput;
+
     console.log(response.output);
     console.log(productDescriptionOutput);
     return json(response);

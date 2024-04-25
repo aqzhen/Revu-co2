@@ -1,11 +1,11 @@
 declare module "*.css";
 
 export type User = {
-  userId : number,
-  name : string,
-  queries : Query[],
-  reviews : Review[]
-}
+  userId: number;
+  name: string;
+  queries: Query[];
+  reviews: Review[];
+};
 
 export type Review = {
   reviewerName: string;
@@ -25,14 +25,14 @@ export type Query = {
   query: string;
   userId: number;
   semanticEmbedding?: string;
-  productId? : number
+  productId?: number;
 };
 
 export type ReviewPrompt = {
-  userId: number,
-  userName: string,
-  questions: string[]
-}
+  userId: number;
+  userName: string;
+  questions: string[];
+};
 
 // Define custom equality function for ReviewPrompt based on userId
 function isEqual(review1: ReviewPrompt, review2: ReviewPrompt): boolean {
@@ -46,6 +46,11 @@ function getHashCode(review: ReviewPrompt): string {
 
 declare global {
   var admin: any;
+  var dataSource: DataSource;
+  var langchain_db: SqlDatabase;
+  var toolkit: SqlToolkit;
+  var tools: Tools;
+  var singleStoreConnection: SingleStoreConnection;
 }
 
 export type Category = {

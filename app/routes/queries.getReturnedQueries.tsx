@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
-import { getQueryInfo } from "~/backend/vectordb/helpers";
+import { getQueryInfo } from "~/backend/vectordb/get";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   return json({ message: "Hello, world!" });

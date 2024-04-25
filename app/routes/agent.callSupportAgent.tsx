@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
-import { call_agent } from "~/backend/langchain/agent";
+import { call_support_agent } from "~/backend/langchain/agents/productAgent";
 import { authenticate } from "~/shopify.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -21,11 +21,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     console.log(session);
   }
 
-  return call_agent(
+  return call_product_agent(
     customerId,
     productId,
     agentQuery,
     JSON.parse(userMode),
-    tableToQuery,
+    tableToQuery
   );
 };

@@ -1,11 +1,11 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { SqlDatabase } from "langchain/sql_db";
 
-export async function call_LLM(
+export async function call_ReviewsLLM(
   responseResult: string,
   llm: ChatOpenAI,
   db: SqlDatabase,
-  query: string,
+  query: string
 ): Promise<string | undefined> {
   // parse result to perform additional queries and LLM calls
   // if results has reviewIds and similarity_score, then we perform query to grab bodies and feed into LLM
@@ -18,8 +18,8 @@ export async function call_LLM(
       new Set(
         resultObject
           .filter((r: any) => r.similarity_score >= 0.45)
-          .map((r: any) => r.reviewId),
-      ),
+          .map((r: any) => r.reviewId)
+      )
     );
 
     // if there's nothing strongly similar enough, we will let the LLM decide if the "less relevant" info is useful
@@ -28,8 +28,8 @@ export async function call_LLM(
         new Set(
           resultObject
             .filter((r: any) => r.similarity_score >= 0.35)
-            .map((r: any) => r.reviewId),
-        ),
+            .map((r: any) => r.reviewId)
+        )
       );
     }
     const reviewIdsString = reviewIds.join(",");
@@ -39,7 +39,7 @@ export async function call_LLM(
       llmOutput = "No semantically similar reviews found.";
     } else {
       const reviewBodies = await db.run(
-        `SELECT reviewId, body, reviewerExternalId FROM Review WHERE reviewId IN (${reviewIdsString})`,
+        `SELECT reviewId, body, reviewerExternalId FROM Review WHERE reviewId IN (${reviewIdsString})`
       );
 
       console.log(reviewBodies);
@@ -49,7 +49,7 @@ export async function call_LLM(
           "Using the following reviews, answer this query, referencing the reviewID where you get your evidence from. You must reference every reviewID. If the original query referenced returning users, you must reference every reviewerExternalId:  " +
             query +
             "\n" +
-            reviewBodies,
+            reviewBodies
         )
       ).content;
     }
@@ -61,8 +61,8 @@ export async function call_LLM(
       new Set(
         resultObject
           .filter((q: any) => q.similarity_score >= 0.5)
-          .map((q: any) => q.queryId),
-      ),
+          .map((q: any) => q.queryId)
+      )
     );
 
     // if there's nothing strongly similar enough, we will let the LLM decide if the "less relevant" info is useful
@@ -71,8 +71,8 @@ export async function call_LLM(
         new Set(
           resultObject
             .filter((q: any) => q.similarity_score >= 0.35)
-            .map((q: any) => q.queryId),
-        ),
+            .map((q: any) => q.queryId)
+        )
       );
     }
     const queryIdsString = queryIds.join(",");
@@ -82,7 +82,7 @@ export async function call_LLM(
       llmOutput = "No semantically similar queries found.";
     } else {
       const queryBodies = await db.run(
-        `SELECT queryId, query FROM Queries WHERE queryId IN (${queryIdsString})`,
+        `SELECT queryId, query FROM Queries WHERE queryId IN (${queryIdsString})`
       );
 
       console.log(queryBodies);
@@ -92,7 +92,7 @@ export async function call_LLM(
           "Using the following evidence, answer this query, referencing the queryId where you get your evidence from. You must reference every queryId: " +
             query +
             "\n" +
-            queryBodies,
+            queryBodies
         )
       ).content;
     }

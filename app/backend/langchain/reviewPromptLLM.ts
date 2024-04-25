@@ -1,7 +1,4 @@
 import { ChatOpenAI } from "@langchain/openai";
-import fs from "fs";
-import { SqlDatabase } from "langchain/sql_db";
-import { DataSource } from "typeorm";
 import { ReviewPrompt } from "~/globals";
 
 export async function call_reviewPromptLLM(userId: string): Promise<string[]> {
@@ -11,27 +8,11 @@ export async function call_reviewPromptLLM(userId: string): Promise<string[]> {
   const llm = new ChatOpenAI({
     modelName: "gpt-3.5-turbo",
   });
-  let db: SqlDatabase;
 
   try {
-    const dataSource = new DataSource({
-      type: "mysql",
-      host: process.env.SINGLESTORE_HOST,
-      port: 3333,
-      username: process.env.SINGLESTORE_USER,
-      password: process.env.SINGLESTORE_PASSWORD,
-      database: process.env.SINGLESTORE_DATABASE,
-      ssl: {
-        ca: fs.readFileSync("./singlestore_bundle.pem"),
-      },
-    });
-    db = await SqlDatabase.fromDataSourceParams({
-      appDataSource: dataSource,
-    });
-
     console.log("Generating review prompt for user id: ?", userId);
-    const userQueries = await db.run(
-      `SELECT queryId, query FROM Queries WHERE userId = ${userId}`,
+    const userQueries = await langchain_db.run(
+      `SELECT queryId, query FROM Queries WHERE userId = ${userId}`
     );
 
     console.log("in the review prompt llm and printing users queries");
@@ -92,28 +73,26 @@ export async function call_reviewPromptLLM(userId: string): Promise<string[]> {
       }
       
 
-      DO NOT INCLUDE anything other that the json output. DO NOT INCLUDE the word 'json' at the start of your output or any QUOTES.`
-            +
+      DO NOT INCLUDE anything other that the json output. DO NOT INCLUDE the word 'json' at the start of your output or any QUOTES.` +
           "\n" +
-          userQueries,
+          userQueries
       )
     ).content;
 
     console.log("in review prompt llm and printing llm output");
     console.log(llmOutput as string);
 
-    let llmOutputString = llmOutput as string
-    const startIndex = llmOutputString.indexOf('{');
-    const endIndex = llmOutputString.lastIndexOf('}');
-    llmOutputString = llmOutputString.substring(startIndex, endIndex+1);
-    
+    let llmOutputString = llmOutput as string;
+    const startIndex = llmOutputString.indexOf("{");
+    const endIndex = llmOutputString.lastIndexOf("}");
+    llmOutputString = llmOutputString.substring(startIndex, endIndex + 1);
 
     console.log(llmOutputString);
 
     const response = JSON.parse(llmOutputString);
     console.log("parsed json");
     console.log(response);
-    const questions: string[] = []
+    const questions: string[] = [];
     response.questions.forEach((element: string) => {
       questions.push(element);
     });
@@ -130,11 +109,11 @@ export async function getReviewPromptData(userIds: string[]): Promise<{
 }> {
   const promises = userIds.map(async (userId) => {
     const llmOutput = await call_reviewPromptLLM(userId);
-    const reviewPromptObj : ReviewPrompt = {
+    const reviewPromptObj: ReviewPrompt = {
       userId: parseInt(userId),
       userName: "Test Name",
-      questions: llmOutput as string[]
-    }
+      questions: llmOutput as string[],
+    };
     return reviewPromptObj;
   });
 
