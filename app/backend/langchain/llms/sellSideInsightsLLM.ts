@@ -3,12 +3,12 @@ import fs from "fs";
 import { SqlDatabase } from "langchain/sql_db";
 import { DataSource } from "typeorm";
 import { Category, Query, Review } from "~/globals";
-import { getProductDescription } from "../api_calls";
-import { getQueryClusters } from "../clustering/queryClustering";
+import { getProductDescription } from "../../api_calls";
+import { getQueryClusters } from "../../clustering/queryClustering";
 
 export async function call_windowShoppersInsightsLLM(
   productId: number,
-  k?: number,
+  k?: number
 ) {
   // parse result to perform additional queries and LLM calls
   // if results has reviewIds and similarity_score, then we perform query to grab bodies and feed into LLM
@@ -41,7 +41,7 @@ export async function call_windowShoppersInsightsLLM(
       JOIN Purchases P
       ON Q.userId = P.userId AND Q.productId = P.productId
       WHERE Q.productId = ${productId} AND P.purchased = 0
-      `,
+      `
     );
 
     console.log("in the sell side llm and printing users queries");
@@ -53,7 +53,7 @@ export async function call_windowShoppersInsightsLLM(
       `SELECT semanticEmbedding
       FROM Queries
       WHERE productId = ${productId} AND userId IN (SELECT userId FROM Purchases WHERE productId = ${productId} AND purchased = 0)
-      `,
+      `
     );
 
     const parsedSemanticEmbeddings = JSON.parse(semanticEmbeddings);
@@ -66,7 +66,7 @@ export async function call_windowShoppersInsightsLLM(
           userId: query.userId,
           semanticEmbedding: parsedSemanticEmbeddings[index].semanticEmbedding,
         };
-      },
+      }
     );
 
     if (queryList.length == 0) {
@@ -171,7 +171,7 @@ export async function call_windowShoppersInsightsLLM(
             ". Product Description: " +
             productDescription +
             "\n. Categories: " +
-            categoriesString,
+            categoriesString
         )
       ).content;
     } else {
@@ -262,7 +262,7 @@ export async function call_windowShoppersInsightsLLM(
             "\n. User Queries: " +
             userQueries +
             ". Product Description: " +
-            productDescription,
+            productDescription
         )
       ).content;
     }
@@ -297,7 +297,7 @@ export async function call_windowShoppersInsightsLLM(
                 userId: query.userId,
               };
               queries.push(q);
-            },
+            }
           );
 
           let c: Category = {
@@ -307,7 +307,7 @@ export async function call_windowShoppersInsightsLLM(
             suggestions: suggestions,
           };
           categories.push(c);
-        },
+        }
       );
     }
 
@@ -379,7 +379,7 @@ export async function call_windowShoppersInsightsLLM(
           "\n" +
           userQueries +
           ". Product Description: " +
-          productDescription,
+          productDescription
       )
     ).content;
 
@@ -397,7 +397,7 @@ export async function call_windowShoppersInsightsLLM(
       insights,
       "\n-------------------------------\n",
       suggestions,
-      keywords,
+      keywords
     );
     const keywordsString = (keywords as string[]).join(", ");
     console.log(keywordsString);
@@ -416,7 +416,7 @@ export async function call_windowShoppersInsightsLLM(
 
 export async function call_purchasingCustomersInsightsLLM(
   productId: number,
-  k?: number,
+  k?: number
 ) {
   // parse result to perform additional queries and LLM calls
   // if results has reviewIds and similarity_score, then we perform query to grab bodies and feed into LLM
@@ -448,7 +448,7 @@ export async function call_purchasingCustomersInsightsLLM(
       JOIN Purchases P
       ON Q.userId = P.userId AND Q.productId = P.productId
       WHERE Q.productId = ${productId} AND P.purchased = 1
-      `,
+      `
     );
 
     console.log("in the sell side llm and printing users queries");
@@ -460,7 +460,7 @@ export async function call_purchasingCustomersInsightsLLM(
       `SELECT semanticEmbedding
       FROM Queries
       WHERE productId = ${productId} AND userId IN (SELECT userId FROM Purchases WHERE productId = ${productId} AND purchased = 1)
-      `,
+      `
     );
 
     const parsedSemanticEmbeddings = JSON.parse(semanticEmbeddings);
@@ -473,7 +473,7 @@ export async function call_purchasingCustomersInsightsLLM(
           userId: query.userId,
           semanticEmbedding: parsedSemanticEmbeddings[index].semanticEmbedding,
         };
-      },
+      }
     );
 
     if (queryList.length === 0) {
@@ -487,7 +487,7 @@ export async function call_purchasingCustomersInsightsLLM(
       JOIN Purchases P
       ON R.reviewerExternalId = P.userId AND R.productId = P.productId
       WHERE R.productId = ${productId} AND P.purchased = 1
-      `,
+      `
     );
 
     console.log("in the sell side llm and printing users reviews");
@@ -604,7 +604,7 @@ export async function call_purchasingCustomersInsightsLLM(
             ". Product Description: " +
             productDescription +
             ". Categories: " +
-            categoriesString,
+            categoriesString
         )
       ).content;
     } else {
@@ -693,7 +693,7 @@ export async function call_purchasingCustomersInsightsLLM(
             userQueries +
             userReviews +
             ". Product Description: " +
-            productDescription,
+            productDescription
         )
       ).content;
     }
@@ -729,7 +729,7 @@ export async function call_purchasingCustomersInsightsLLM(
               userId: query.userId,
             };
             queries.push(q);
-          },
+          }
         );
 
         let c: Category = {
@@ -739,7 +739,7 @@ export async function call_purchasingCustomersInsightsLLM(
           suggestions: suggestions,
         };
         categories.push(c);
-      },
+      }
     );
 
     console.log(categories);
@@ -759,7 +759,7 @@ export async function call_purchasingCustomersInsightsLLM(
           userQueries +
           userReviews +
           ". Product Description: " +
-          productDescription,
+          productDescription
       )
     ).content;
 

@@ -11,7 +11,7 @@ export async function call_ReviewsLLM(
   // if results has reviewIds and similarity_score, then we perform query to grab bodies and feed into LLM
   let llmOutput;
   const resultObject = JSON.parse(responseResult);
-  console.log(resultObject);
+  // console.log(resultObject);
   if (resultObject.length > 0 && (resultObject[0] as any).reviewId) {
     // get unique reviewIds of (reviewId, chunkNumber) pairs that have similarity score > 0.5
     let reviewIds = Array.from(
@@ -42,7 +42,7 @@ export async function call_ReviewsLLM(
         `SELECT reviewId, body, reviewerExternalId FROM Review WHERE reviewId IN (${reviewIdsString})`
       );
 
-      console.log(reviewBodies);
+      // console.log(reviewBodies);
 
       llmOutput = (
         await llm.invoke(
@@ -85,7 +85,7 @@ export async function call_ReviewsLLM(
         `SELECT queryId, query FROM Queries WHERE queryId IN (${queryIdsString})`
       );
 
-      console.log(queryBodies);
+      // console.log(queryBodies);
 
       llmOutput = (
         await llm.invoke(

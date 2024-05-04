@@ -121,7 +121,7 @@ export async function getAllUsers() {
   }
 
   const output = await Promise.all(promises);
-  console.log(output[0]);
+  // console.log(output[0]);
 
   const tableDataMap: { [key: number]: any[][] } = {};
   const usersMap: { [key: number]: User } = {};
@@ -198,4 +198,26 @@ export async function getUser(userId: number): Promise<{ user: User }> {
     console.error("ERROR", err);
     process.exit(1);
   }
+}
+
+export async function getCxQueries() {
+  const [response, bufff] = await singleStoreConnection.execute(
+    `
+        SELECT queryId, query, userId, productId, answer
+        FROM Customer_Support_Queries
+      `
+  );
+  const queries: Query[] = [];
+  for (const row of response as RowDataPacket[]) {
+    const query: Query = {
+      queryId: row.queryId,
+      query: row.query,
+      userId: row.userId,
+      productId: row.productId,
+      answer: row.answer,
+    };
+    queries.push(query);
+  }
+
+  return { queries };
 }

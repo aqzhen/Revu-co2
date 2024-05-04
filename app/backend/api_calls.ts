@@ -42,7 +42,7 @@ export async function fetchJudgeReviews() {
       headers: {
         "Content-Type": "application/json",
       },
-    },
+    }
   );
 
   if (!response.ok) {
@@ -68,7 +68,7 @@ export async function fetchJudgeReview(reviewId: string) {
       headers: {
         "Content-Type": "application/json",
       },
-    },
+    }
   );
 
   if (!response.ok) {
@@ -84,17 +84,19 @@ export async function fetchJudgeReview(reviewId: string) {
 }
 
 export async function getCustomerProductPurchases(customerId: number) {
-  const response = await admin.graphql(`
-    query {
-      customer(id: "gid://shopify/Customer/${customerId}") {
-        orders (first:10) {
-          edges {
-            node {
-              lineItems (first:10) {
-                edges {
-                  node {
-                    product {
-                      id
+  try {
+    const response = await admin.graphql(`
+      query {
+        customer(id: "gid://shopify/Customer/${customerId}") {
+          orders (first:10) {
+            edges {
+              node {
+                lineItems (first:10) {
+                  edges {
+                    node {
+                      product {
+                        id
+                      }
                     }
                   }
                 }
@@ -103,21 +105,24 @@ export async function getCustomerProductPurchases(customerId: number) {
           }
         }
       }
-    }
-  `);
-  if (!response.ok) {
-    // Handle error if response is not ok
-    throw new Error("Failed to fetch products");
-  }
-  const responseJson = await response.json();
+    `);
+    // if (!response.ok) {
+    //   // Handle error if response is not ok
+    //   throw new Error("Failed to fetch products");
+    // }
+    const responseJson = await response.json();
 
-  const productIds: number[] =
-    responseJson.data?.customer?.orders?.edges?.flatMap((edge: any) =>
-      edge.node.lineItems.edges.map((item: any) =>
-        Number(item.node.product.id.replace("gid://shopify/Product/", "")),
-      ),
-    );
-  return json({ productIds: productIds });
+    const productIds: number[] =
+      responseJson.data?.customer?.orders?.edges?.flatMap((edge: any) =>
+        edge.node.lineItems.edges.map((item: any) =>
+          Number(item.node.product.id.replace("gid://shopify/Product/", ""))
+        )
+      );
+    return json({ productIds: productIds });
+  } catch (error) {
+    // Handle error
+    throw new Error("Failed to fetch customer product purchases");
+  }
 }
 
 export async function getProductDescription(productId: number) {
@@ -134,5 +139,5 @@ export async function getProductDescription(productId: number) {
   }
   const responseJson = await response.json();
 
-  return ({ description: responseJson.data?.product?.description });
+  return { description: responseJson.data?.product?.description };
 }

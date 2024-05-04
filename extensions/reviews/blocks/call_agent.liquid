@@ -1,19 +1,134 @@
-<div id="resizableContainer" style="display: flex; align-items: center; justify-content: center; flex-direction: column; background-color: #f5f5f5; padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); position: fixed; bottom: 50px; right: 20px; max-height: 80vh; overflow-y: auto; z-index: 9999;">
-    <input id="myInput" type="text" placeholder="Enter a query" style="margin-bottom: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
-    <button id="myButton" style="padding: 10px 20px; background-color: #007bff; color: #fff; border: none; border-radius: 5px; cursor: pointer;">Call Agent</button>
-    <div>
-        <div id="firstDiv" style="border: 1px solid #ccc; padding: 10px; border-radius: 5px; margin-bottom: 10px; ">
-            <p id="prompt"></p>
-            <p id="pd_output"></p>
-            <p id="output"></p>
-        </div>
-        <div id="relevant-reviews">
-        </div>
-    </div>
-    <button id="toggleButton" style="padding: 5px 10px; background-color: #007bff; color: #fff; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">Toggle</button>
-</div>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="../assets/styles.css" />
+  </head>
+  <script
+    type="module"
+    src="https://unpkg.com/deep-chat@1.4.11/dist/deepChat.bundle.js"
+  ></script>
+  <body>
+    <!-- Attributes can be set as strings either directly on the element (demo/textInput) or via a `setAttribute` method on its reference (introMessage).
+      When passing JSON objects make sure that they are first correctly stringified (use the following tool https://jsonlint.com/), functions assigned
+      to properties must not have external references and all regex values are properly escaped.
+      You can also pass values into the component via properties by using the element reference (initialMessages).
+      -->`
+    <deep-chat
+      id="chat-element"
+      style="border-radius: 10px; position: fixed; bottom: 10px; right: 2%; z-index: 1; font-size: 1rem;"
+      
+      textInput='{
+        "styles": {
+          "container": {
+            "width": "100%",
+            "margin": "0",
+            "border": "unset",
+            "borderTop": "1px solid #d5d5d5",
+            "borderRadius": "0px",
+            "boxShadow": "unset"
+          },
+          "text": {
+            "fontSize": "1.05em",
+            "paddingTop": "11px",
+            "paddingBottom": "13px",
+            "paddingLeft": "12px",
+            "paddingRight": "2.4em"
+          }
+        },
+        "placeholder": {"text": "Type a message...", "style": {"color": "#bcbcbc"}}
+      }'
+      submitButtonStyles='{
+        "submit": {
+          "container": {
+            "default": {
+              "transform": "scale(1.21)",
+              "marginBottom": "-3px",
+              "marginRight": "0.4em"
+            }
+          }
+        }
+      }'
 
-<script>
+        demo="true"
+    >
+    </deep-chat>
+  </body>
+  <!-- !!Either set the script as "module" or place your code in a timeout in order to wait for the component to load -->
+  <script type="module">
+    let searchType = "";
+    const customerId = {{customer.id | json}};
+    const productId = {{product.id | json}};
+    const elementRef = document.getElementById("chat-element");
+    elementRef.initialMessages = [
+        {
+            text: "Welcome to CO2 Meter! How can I help?",
+            role: 'ai',
+        },
+        {
+            html: `
+            <div class="deep-chat-temporary-message">
+                <button class="deep-chat-button deep-chat-suggestion-button" style="border: 1px solid blue">Support Search</button>
+                <button class="deep-chat-button deep-chat-suggestion-button" style="border: 1px solid blue">Catalog Search</button>
+                <button class="deep-chat-button deep-chat-suggestion-button" style="border: 1px solid blue">Specific Product Search</button>
+            </div>
+            </div>`,
+        },
+    ];
+    elementRef.request = {
+        handler: async (body, signals) => {
+            if (body.messages[0].text == "Support Search") {
+                searchType = "support";
+                signals.onResponse({text: "Great, looks like you need help with a general inquiry, please enter your query:"});
+            } else if (body.messages[0].text == "Catalog Search") {
+                searchType = "catalog";
+                signals.onResponse({text: "Great, looks like you'd like to search over our catalog. What are you looking for?"});
+            } else if (body.messages[0].text == "Specific Product Search") {
+                if (productId == null) {
+                    signals.onResponse({text: "Sorry, I can't help you with this. Please select a product first."});
+                } else {
+                    searchType = "product";
+                    signals.onResponse({text: "Great, looks like you want to know more about this product! Please enter your query:"});
+                }
+            } else {
+                try {
+                    const data = {
+                        "userId": customerId,
+                        "productId": productId,
+                        "agentQuery": (body.messages)[0].text,
+                        "searchType": searchType
+                    };
+                    const response = await fetch('/apps/my_app/agent/callAgentRouter', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data),
+                    });
+
+                    const responseData = await response.json();
+                    console.log("API response:", responseData.html);
+                    let htmlString = 
+                    `<div class="deep-chat-temporary-message">
+                            <button class="deep-chat-button deep-chat-suggestion-button" style="border: 1px solid blue">Support Search</button>
+                            <button class="deep-chat-button deep-chat-suggestion-button" style="border: 1px solid blue">Catalog Search</button>
+                            <button class="deep-chat-button deep-chat-suggestion-button" style="border: 1px solid blue">Specific Product Search</button>
+                        </div>`;
+                    signals.onResponse({html: responseData.html + htmlString}); // displays the response text message
+                  
+                } catch (e) {
+                    signals.onResponse({error: 'Error'}); // displays an error message
+                }
+            }
+
+            
+        }
+    };
+
+  </script>
+</html>
+
+
+{% comment %} <script>
     const resizableContainer = document.querySelector('#resizableContainer');
     const toggleButton = document.querySelector('#toggleButton');
     const firstDiv = document.querySelector('#firstDiv');
@@ -45,10 +160,11 @@
 
 
 <script>
-    const button = document.querySelector('#myButton');
+    const productButton = document.querySelector('#productAgentButton');
+    const supportButton = document.querySelector('#supportAgentButton');
     const customerId = {{customer.id | json}};
     const productId = {{product.id | json}};
-    button.addEventListener('click', async function(event) {
+    productButton.addEventListener('click', async function(event) {
         event.preventDefault();
         const input = document.querySelector('#myInput');
         const value = input.value;
@@ -187,7 +303,29 @@
             console.error("API call failed with status:", response.status);
         }
     });
-</script>
+
+    supportButton.addEventListener('click', async function(event) {
+        event.preventDefault();
+        const input = document.querySelector('#myInput');
+        const value = input.value;
+        console.log("Button clicked with value:", value);
+       
+        const data = { userId: customerId, productId: productId, agentQuery: value};
+        console.log(productId);
+
+        const response = await fetch('/apps/my_app/agent/callSupportAgent', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+
+       
+            const responseData = await response.json();
+            console.log("API response:", responseData);
+    });
+</script> {% endcomment %}
 
 {% schema %}
 {

@@ -7,12 +7,17 @@ export interface Chunk {
   reviewId: number;
 }
 
-export async function chunk_string(chunkString: string, reviewId: number) {
+export async function chunk_string(
+  chunkString: string,
+  reviewId: number,
+  chunkSize: number = 256,
+  chunkOverlap: number = 20
+) {
   const n = chunkString.length;
   let start = 0;
   const splitter = new RecursiveCharacterTextSplitter({
-    chunkSize: 256,
-    chunkOverlap: 20,
+    chunkSize: chunkSize,
+    chunkOverlap: chunkOverlap,
   });
   const chunks = await splitter.createDocuments([chunkString]);
   const res = chunks.map((item) => {
@@ -31,6 +36,6 @@ export async function chunk_string(chunkString: string, reviewId: number) {
   // res.forEach(element => {
   //   console.log(element.chunkBody.length, element.startIndex, element.endIndex);
   // });
-  console.log(res);
+  // console.log(res);
   return res;
 }

@@ -16,7 +16,7 @@ export async function call_reviewPromptLLM(userId: string): Promise<string[]> {
     );
 
     console.log("in the review prompt llm and printing users queries");
-    console.log(userQueries);
+    // console.log(userQueries);
 
     llmOutput = (
       await llm.invoke(
@@ -80,23 +80,23 @@ export async function call_reviewPromptLLM(userId: string): Promise<string[]> {
     ).content;
 
     console.log("in review prompt llm and printing llm output");
-    console.log(llmOutput as string);
+    // console.log(llmOutput as string);
 
     let llmOutputString = llmOutput as string;
     const startIndex = llmOutputString.indexOf("{");
     const endIndex = llmOutputString.lastIndexOf("}");
     llmOutputString = llmOutputString.substring(startIndex, endIndex + 1);
 
-    console.log(llmOutputString);
+    // console.log(llmOutputString);
 
     const response = JSON.parse(llmOutputString);
     console.log("parsed json");
-    console.log(response);
+    // console.log(response);
     const questions: string[] = [];
     response.questions.forEach((element: string) => {
       questions.push(element);
     });
-    console.log(questions);
+    // console.log(questions);
     return questions;
   } catch (err) {
     console.error("ERROR", err);
@@ -118,6 +118,6 @@ export async function getReviewPromptData(userIds: string[]): Promise<{
   });
 
   const output = await Promise.all(promises);
-  console.log(output);
+  // console.log(output);
   return { reviewPromptData: output };
 }

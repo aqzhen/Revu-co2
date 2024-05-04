@@ -37,7 +37,10 @@ export async function updatePurchasedStatus() {
       // if match, update purchased status to 1
 
       console.log(productId + "  " + purchasedProducts.productIds);
-      if (purchasedProducts.productIds.includes(productId)) {
+      if (
+        purchasedProducts.productIds &&
+        purchasedProducts.productIds.includes(productId)
+      ) {
         console.log("Match found for user " + userId);
         const [results, buff] = await singleStoreConnection.execute(
           `

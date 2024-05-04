@@ -3,7 +3,7 @@
     "env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "app/routes/agent.callProductAgenttsx"
+    "app/routes/agent.callAgenttsx"
   ],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022"],

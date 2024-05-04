@@ -1,11 +1,12 @@
 import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
-import { getReviewPromptData } from "~/backend/langchain/llms/reviewPromptLLM";
+import { addCustomerSupportCorpusChunksToSingleStore } from "~/backend/vectordb/add";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   return json({ message: "Hello, world!" });
 };
 export const action = async ({ request }: ActionFunctionArgs) => {
   const body = await request.json();
-  const { userIds } = body;
-  return await getReviewPromptData(userIds);
+  const { documents } = body;
+  await addCustomerSupportCorpusChunksToSingleStore(documents);
+  return null;
 };

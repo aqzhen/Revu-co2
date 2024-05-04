@@ -26,6 +26,7 @@ export type Query = {
   userId: number;
   semanticEmbedding?: string;
   productId?: number;
+  answer?: string;
 };
 
 export type ReviewPrompt = {

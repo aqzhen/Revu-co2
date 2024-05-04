@@ -7,7 +7,7 @@ import { generateEmbedding } from "./misc";
 export async function insertProduct(
   productId: number,
   title: string,
-  description: string,
+  description: string
 ): Promise<void> {
   try {
     const pdEmbedding = await generateEmbedding(description);
@@ -24,7 +24,7 @@ export async function insertProduct(
           '${description.replace(/'/g, "\\'")}',
           '${pdEmbedding}'
       )
-    `,
+    `
     );
     console.log("Product added successfully.");
     console.log(productId, title, description);
@@ -35,11 +35,13 @@ export async function insertProduct(
 }
 
 export async function addAllProducts() {
-  const productData = await (await ((getProducts()))).json();
+  const productData = await (await getProducts()).json();
   productData.products.map(async (edge: any) => {
-    let id : number = Number(edge?.node?.id.replace("gid://shopify/Product/", ""))
+    let id: number = Number(
+      edge?.node?.id.replace("gid://shopify/Product/", "")
+    );
     await insertProduct(id, edge?.node?.title, edge?.node?.description);
-  })
+  });
 }
 
 export async function addReviewChunksToSingleStore(
@@ -248,11 +250,11 @@ export async function addCustomerSupportQueryToSinglestore(
         INSERT INTO Customer_Support_Queries (
             productId,
             userId,
-            query,
+            query
         ) VALUES (
             ${productId},
             ${userId},
-            '${query.replace(/'/g, "\\'")}',
+            '${query.replace(/'/g, "\\'")}'
         )
         `
     );
@@ -286,7 +288,7 @@ export async function addCustomerSupportCorpusChunksToSingleStore(
 ): Promise<void> {
   let documentNumber = 1;
   for (const document of documents) {
-    const chunks = await chunk_string(document, documentNumber);
+    const chunks = await chunk_string(document, documentNumber, 512, 128);
     let chunkNumber = 1;
     for (const chunk of chunks) {
       try {
@@ -329,7 +331,7 @@ export async function addCustomerSupportCorpusChunksToSingleStore(
     }
     documentNumber += 1;
   }
-  console.log("Added chunks for all reviews");
+  console.log("Added chunks for all documents");
 }
 
 // this is called whenever seller sets answer to a query, or whenever a query is answered by the agent and is similar enough to an existing query with an answer

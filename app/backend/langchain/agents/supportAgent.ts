@@ -1,71 +1,14 @@
-import {
-  ChatPromptTemplate,
-  HumanMessagePromptTemplate,
-  MessagesPlaceholder,
-} from "@langchain/core/prompts";
-import { ChatOpenAI } from "@langchain/openai";
 import { json } from "@remix-run/node";
-import { AgentExecutor, createOpenAIToolsAgent } from "langchain/agents";
-import { AIMessage } from "langchain/schema";
 import { SqlDatabase } from "langchain/sql_db";
-import {
-  addCustomerSupportQueryToSinglestore
-} from "~/backend/vectordb/add";
-import { call_ReviewsLLM } from "../queryReviewsLLM";
-import { prefix, suffix } from "./productAgentPrompt";
-
-let executor: AgentExecutor;
-const llm = new ChatOpenAI({
-  modelName: "gpt-3.5-turbo",
-});
-let db: SqlDatabase;
-
-export async function initialize_support_agent() {
-  try {
-    const prompt = ChatPromptTemplate.fromMessages([
-      ["system", prefix],
-      // new MessagesPlaceholder("chat_history"),
-      HumanMessagePromptTemplate.fromTemplate("{input}"),
-      new AIMessage(suffix.replace("{agent_scratchpad}", "")),
-      new MessagesPlaceholder("agent_scratchpad"),
-    ]);
-    // const memory = new BufferMemory({
-    //   memoryKey: "chat_history",
-    //   returnMessages: true,
-    // }); // adding memory here
-
-    const newPrompt = await prompt.partial({
-      dialect: toolkit.dialect,
-    });
-    const runnableAgent = await createOpenAIToolsAgent({
-      llm,
-      tools,
-      prompt: newPrompt,
-    });
-    executor = new AgentExecutor({
-      agent: runnableAgent,
-      tools,
-      returnIntermediateSteps: true,
-      verbose: false,
-      // memory: memory,
-    });
-  } catch (err) {
-    console.error("ERROR", err);
-  }
-}
+import { addCustomerSupportQueryToSinglestore } from "~/backend/vectordb/add";
+import { call_ReviewsLLM } from "../llms/queryReviewsLLM";
+import { Query } from "~/globals";
 
 export async function callSupportAgent(
   userId: number = -1,
   productId: number = -1,
   query: string
 ) {
-  let response = {
-    prompt: query,
-    sqlQuery: "",
-    result: [],
-    error: "",
-    output: "",
-  };
   try {
     // we will basically have two tables: customerSupportCorpus and customerSupportQueries
 
@@ -96,49 +39,112 @@ export async function callSupportAgent(
     // if not, call agent to answer query
 
     if (queryId !== undefined) {
-    }
+      console.log("Calling semantic cache...");
+      const queries = await langchain_db.run(
+        `
+        SELECT queryId, userId, query, answer,
+            DOT_PRODUCT(Query.semanticEmbedding, Customer_Support_Queries.semanticEmbedding) AS similarity_score
+        FROM Customer_Support_Queries
+        CROSS JOIN (SELECT semanticEmbedding FROM Customer_Support_Queries WHERE queryId = ${queryId}) AS Query
+        WHERE Customer_Support_Queries.queryId != ${queryId} AND Customer_Support_Queries.answer IS NOT NULL
+        ORDER BY similarity_score DESC
+        LIMIT 25;
 
-    console.log("Calling agent...");
-    let result;
-    if (queryId !== undefined) {
-      result = await executor.invoke({
-        input:
-          "QueryId: " +
-          queryId +
-          ". Query the customerSupportCorpus table. " +
-          query +
-          "for productId " +
-          productId,
-      });
-    }
-
-    // TODO: Figure out if we can save tokens here by not returning all intermediate steps
-    if (result) {
-      result.intermediateSteps.forEach((step: any) => {
-        if (step.action.tool === "query-sql") {
-          response.prompt = query;
-          response.sqlQuery = step.action.toolInput.input;
-          response.result = step.observation;
-        }
-      });
-      console.log(
-        `Intermediate steps ${JSON.stringify(result.intermediateSteps, null, 2)}`
+        `
       );
+
+      let filteredQueries = JSON.parse(queries).filter(
+        (query: any) => query.similarity_score > 0.6
+      );
+
+      console.log("Semantic Cache Results:" + filteredQueries.length + "\n");
+
+      // run the agent to search over the faq corpus
+      console.log("Calling support agent...");
+      const faqChunks = await langchain_db.run(
+        `
+        SELECT Customer_Support_Corpus.documentId, Customer_Support_Corpus.chunkNumber, Customer_Support_Corpus.body,
+            DOT_PRODUCT(Customer_Support_Corpus.chunkEmbedding, Query.semanticEmbedding) AS similarity_score
+        FROM Customer_Support_Corpus
+        CROSS JOIN (SELECT semanticEmbedding FROM Customer_Support_Queries WHERE queryId = ${queryId}) AS Query
+        ORDER BY similarity_score DESC
+        LIMIT 25;
+
+        `
+      );
+
+      // WHERE Customer_Support_Corpus.productId = ${productId}
+
+      let filteredChunks = JSON.parse(faqChunks).filter(
+        (chunk: any) => chunk.similarity_score > 0.4
+      );
+      console.log("Agent Results:" + filteredChunks.length + "\n");
+      // console.log("Cache output " + filteredQueries + "\n");
+      // console.log("Agent output " + filteredChunks);
+
+      // Parse filteredQueries and filteredChunks into HTML output
+      let htmlOutput = "";
+      htmlOutput += "<h2>Semantic Cache Output:</h2>";
+      htmlOutput += "<ul>";
+      filteredQueries.forEach((query: any) => {
+        htmlOutput += `<div style="overflow-x: auto;">`;
+        htmlOutput += `<div style="display: flex;">`;
+        filteredQueries.forEach((query: any) => {
+          htmlOutput += `<div style="border: 1px solid black; padding: 10px; margin: 10px;">`;
+          htmlOutput += `<h3>Query ID: ${query.queryId}</h3>`;
+          htmlOutput += `<p>User ID: ${query.userId}</p>`;
+          htmlOutput += `<p>Query: ${query.query}</p>`;
+          htmlOutput += `<p>Answer: ${query.answer}</p>`;
+          htmlOutput += `<p>Similarity Score: ${query.similarity_score}</p>`;
+          htmlOutput += `</div>`;
+        });
+        htmlOutput += `</div>`;
+        htmlOutput += `</div>`;
+      });
+      htmlOutput += "</ul>";
+
+      htmlOutput += "<h2>FAQ Agent Output:</h2>";
+      htmlOutput += "<ul>";
+      filteredChunks.forEach((chunk: any) => {
+        htmlOutput += `<div style="overflow-x: auto;">`;
+        htmlOutput += `<div style="display: flex;">`;
+        filteredChunks.forEach((chunk: any) => {
+          htmlOutput += `<div style="border: 1px solid black; padding: 10px; margin: 10px;">`;
+          htmlOutput += `<h3>Document ID: ${chunk.documentId}</h3>`;
+          htmlOutput += `<p>Chunk Number: ${chunk.chunkNumber}</p>`;
+          htmlOutput += `<p>Body: ${chunk.body}</p>`;
+          htmlOutput += `<p>Similarity Score: ${chunk.similarity_score}</p>`;
+          htmlOutput += `</div>`;
+        });
+        htmlOutput += `</div>`;
+        htmlOutput += `</div>`;
+      });
+      htmlOutput += "</ul>";
+      return htmlOutput;
     }
-
-    const llmOutput = await call_ReviewsLLM(
-      response.result as unknown as string,
-      llm,
-      db,
-      query
-    );
-
-    response.output = llmOutput as string;
-
-    console.log(response.output);
-    return json(response);
   } catch (err) {
     console.error("ERROR", err);
     return null;
   }
 }
+
+export async function setAutomatedAnswer(queryIds: number[], answer: string) {
+  try {
+    for (let i = 0; i < queryIds.length; i++) {
+      await singleStoreConnection.execute(
+        `
+        UPDATE Customer_Support_Queries
+        SET answer = ?
+        WHERE queryId = ?
+      `,
+        [answer, queryIds[i]]
+      );
+
+      console.log("Automated answer set.");
+    }
+  } catch (err) {
+    console.error("ERROR", err);
+  }
+}
+
+export async function sendAnswer(queries: Query[], answer: string) {}
