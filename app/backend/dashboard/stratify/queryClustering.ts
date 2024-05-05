@@ -1,4 +1,4 @@
-import { Query } from "../../globals";
+import { Query } from "../../../globals";
 
 interface Point {
   queryId: number;
@@ -40,7 +40,7 @@ class KMeansClustering {
       for (let i = 0; i < this.centroids.length; i++) {
         const distance = this.calculateDistance(
           point.embedding,
-          this.centroids[i],
+          this.centroids[i]
         );
         if (distance < minDistance) {
           minDistance = distance;
@@ -74,7 +74,7 @@ class KMeansClustering {
 
   private calculateDistance(
     embedding1: number[],
-    embedding2: number[],
+    embedding2: number[]
   ): number {
     let dotProduct = 0;
     let norm1 = 0;
@@ -101,14 +101,14 @@ class KMeansClustering {
     }
 
     const clusterLabels = this.points.map(
-      (point) => point.clusterLabel,
+      (point) => point.clusterLabel
     ) as number[];
     return clusterLabels;
   }
 
   private areCentroidsEqual(
     centroids1: number[][],
-    centroids2: number[][],
+    centroids2: number[][]
   ): boolean {
     if (centroids1.length !== centroids2.length) {
       return false;
@@ -141,7 +141,7 @@ export function getQueryClusters(queries: Query[], k: number): string {
 
   function outputClusterResults(
     clusterLabels: number[],
-    points: Point[],
+    points: Point[]
   ): string {
     const clusters: { [key: number]: number[] } = {};
     for (let i = 0; i < clusterLabels.length; i++) {

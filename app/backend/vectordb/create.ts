@@ -191,6 +191,29 @@ export async function createCustomerSupportCorpusTable(
   }
 }
 
+export async function createUsersTable(deleteExisting: boolean) {
+  try {
+    if (deleteExisting) {
+      console.log("Dropping users table");
+
+      await singleStoreConnection.execute("DROP TABLE IF EXISTS Users");
+    }
+    await singleStoreConnection.execute(`
+                CREATE TABLE Users (
+                    userId BIGINT,
+                    firstName TEXT,
+                    lastName TEXT,
+                    email TEXT,
+                    accountCreated TIMESTAMP,
+                    PRIMARY KEY (userId, email)
+                )
+            `);
+    console.log("Users table created successfully.");
+  } catch (err) {
+    console.log("Users table already exists");
+  }
+}
+
 export async function createAllTables(deleteExisting: boolean) {
   createCustomerSupportCorpusTable(deleteExisting);
   createCustomerSupportQueriesTable(deleteExisting);
@@ -200,4 +223,5 @@ export async function createAllTables(deleteExisting: boolean) {
   createReviewTable(deleteExisting);
   createSellerQueriesTable(deleteExisting);
   createProductsTable(deleteExisting);
+  createUsersTable(deleteExisting);
 }

@@ -18,9 +18,13 @@ import { authenticate } from "../shopify.server";
 import { createAllTables } from "~/backend/vectordb/create";
 import { getAllUsers, getCxQueries } from "~/backend/vectordb/get";
 import { initializeDBconnections } from "~/backend/vectordb/misc";
-import { updatePurchasedStatus } from "~/backend/vectordb/update";
+import {
+  updateExistingUsers,
+  updatePurchasedStatus,
+} from "~/backend/vectordb/update";
 import { Chunk } from "../backend/langchain/chunking";
 import { Category, Query, Review, ReviewPrompt, User } from "../globals";
+import { addExistingUsers } from "~/backend/vectordb/add";
 
 // trigger action to get reviews
 const initializeReviews = async (
@@ -89,6 +93,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   await initializeDBconnections();
   await createAllTables(false);
   await updatePurchasedStatus();
+
+  // TODO: TEST THESE
+  await addExistingUsers();
+  await updateExistingUsers();
+
   const reviewsHashmap = await initializeReviews(domain, false);
 
   const { allUsersData, tableDataMap, usersMap } = await getAllUsers();
@@ -487,166 +496,7 @@ export default function Index() {
                     ))}
                 </>
               )}
-              {selectedTab === 1 && (
-                <>
-                  <RangeSlider
-                    label="Toggle Category Granularity (Select 1 for auto-granularity)"
-                    value={sliderRangeValue}
-                    min={1}
-                    max={10}
-                    onChange={handleRangeSliderChange}
-                    output
-                  />
-                  <Button
-                    onClick={async () => {
-                      try {
-                        const requestData = {
-                          productId: selectedProduct,
-                          selector: "purchasingCustomers",
-                          k: sliderRangeValue,
-                        };
 
-                        const response = await fetch(
-                          "/agent/sellSideInsights",
-                          {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify(requestData),
-                          }
-                        );
-                        const data = await response.json();
-                        const { categories, userWideInsights } = data;
-                        setPurchasingCustomersInsights(userWideInsights);
-                        setPurchasingCustomersCategories(categories);
-                      } catch (error) {
-                        // Handle any errors
-                        console.error(error);
-                      }
-                    }}
-                  >
-                    Get Insights
-                  </Button>
-                  <div>
-                    <br />
-                    <h1
-                      style={{
-                        fontFamily: "Arial, sans-serif",
-                        color: "#0077b6",
-                        fontSize: 16,
-                      }}
-                    >
-                      <strong>User-Wide Insights</strong>
-                    </h1>
-                    <p> {purchasingCustomersInsights} </p>
-                  </div>
-                  <br />
-                  {purchasingCustomersCategories &&
-                    purchasingCustomersCategories.map(
-                      (category, categoryIndex) => (
-                        <Card>
-                          {
-                            <div key={category.category}>
-                              <h1
-                                style={{
-                                  fontFamily: "Arial, sans-serif",
-                                  color: "#0077b6",
-                                  fontSize: 16,
-                                }}
-                              >
-                                <strong>Category:</strong> {category.category}{" "}
-                              </h1>
-                              <br />
-                              <p>
-                                {" "}
-                                <strong>Summary:</strong> {category.summary}{" "}
-                              </p>
-                              <br />
-                              <p>
-                                {" "}
-                                <strong>Suggestions:</strong>{" "}
-                                {category.suggestions}
-                              </p>
-                              <br />
-                              <details>
-                                <summary> See Relevant Queries </summary>
-                                {category.queries.map((query) => (
-                                  <div key={query.queryId}>
-                                    <p>
-                                      {" "}
-                                      <strong>Query: </strong> {query.query}{" "}
-                                      (Query ID: {query.queryId}, User ID:{" "}
-                                      {query.userId})
-                                    </p>
-                                  </div>
-                                ))}
-                              </details>
-                              <br />
-                              <Button
-                                onClick={async () => {
-                                  try {
-                                    const userIds: Set<number> = new Set();
-                                    category.queries.forEach((query) =>
-                                      userIds.add(query.userId)
-                                    );
-                                    const requestData = {
-                                      userIds: Array.from(userIds),
-                                    };
-                                    const response = await fetch(
-                                      "/prompts/getReviewPromptData",
-                                      {
-                                        method: "POST",
-                                        headers: {
-                                          "Content-Type": "application/json",
-                                        },
-                                        body: JSON.stringify(requestData),
-                                      }
-                                    );
-
-                                    const data = await response.json();
-                                    // console.log(data);
-                                    setReviewPromptDataTest(
-                                      data.reviewPromptData
-                                    );
-                                    setSentStatus(
-                                      Array(reviewPromptDataTest.length).fill(
-                                        false
-                                      )
-                                    );
-                                    setCategorySentStatus(
-                                      Array(
-                                        purchasingCustomersCategories.length
-                                      ).fill(true)
-                                    );
-                                    categorySentStatus[categoryIndex] = true;
-                                  } catch (error) {
-                                    // Handle any errors
-                                    console.error(error);
-                                  }
-                                }}
-                              >
-                                Prompt Users
-                              </Button>
-                              <br />
-                              {categorySentStatus[categoryIndex] &&
-                                reviewPromptData.map((prompt) => (
-                                  <div>
-                                    <p>
-                                      {" "}
-                                      Followups succesfully generated for
-                                      userId: {prompt.userId}, check the
-                                      followups tab!
-                                    </p>
-                                  </div>
-                                ))}
-                            </div>
-                          }
-                        </Card>
-                      )
-                    )}
-                </>
-              )}
               {selectedTab === 2 &&
                 reviewPromptDataTest &&
                 reviewPromptDataTest.map((reviewPrompt, reviewIndex) => (

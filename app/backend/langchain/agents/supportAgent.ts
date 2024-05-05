@@ -1,14 +1,19 @@
 import { json } from "@remix-run/node";
 import { SqlDatabase } from "langchain/sql_db";
 import { addCustomerSupportQueryToSinglestore } from "~/backend/vectordb/add";
-import { call_ReviewsLLM } from "../llms/queryReviewsLLM";
+import { call_ReviewsLLM } from "../../dashboard/llms/queryReviewsLLM";
 import { Query } from "~/globals";
 
 export async function callSupportAgent(
-  userId: number = -1,
+  customerId: number = -1,
   productId: number = -1,
+  email: string = "",
   query: string
 ) {
+  if (customerId === -1 && email === "") {
+    console.error("ERROR: No customer ID or email provided.");
+    return null;
+  }
   try {
     // we will basically have two tables: customerSupportCorpus and customerSupportQueries
 
@@ -30,7 +35,8 @@ export async function callSupportAgent(
 
     queryId = await addCustomerSupportQueryToSinglestore(
       productId,
-      userId,
+      customerId,
+      email,
       query
     );
 
@@ -88,16 +94,12 @@ export async function callSupportAgent(
       htmlOutput += "<ul>";
       filteredQueries.forEach((query: any) => {
         htmlOutput += `<div style="overflow-x: auto;">`;
-        htmlOutput += `<div style="display: flex;">`;
-        filteredQueries.forEach((query: any) => {
-          htmlOutput += `<div style="border: 1px solid black; padding: 10px; margin: 10px;">`;
-          htmlOutput += `<h3>Query ID: ${query.queryId}</h3>`;
-          htmlOutput += `<p>User ID: ${query.userId}</p>`;
-          htmlOutput += `<p>Query: ${query.query}</p>`;
-          htmlOutput += `<p>Answer: ${query.answer}</p>`;
-          htmlOutput += `<p>Similarity Score: ${query.similarity_score}</p>`;
-          htmlOutput += `</div>`;
-        });
+        htmlOutput += `<div style="border: 1px solid black; padding: 10px; margin: 10px;">`;
+        htmlOutput += `<h3>Query ID: ${query.queryId}</h3>`;
+        htmlOutput += `<p>User ID: ${query.userId}</p>`;
+        htmlOutput += `<p>Query: ${query.query}</p>`;
+        htmlOutput += `<p>Answer: ${query.answer}</p>`;
+        htmlOutput += `<p>Similarity Score: ${query.similarity_score}</p>`;
         htmlOutput += `</div>`;
         htmlOutput += `</div>`;
       });
@@ -107,15 +109,11 @@ export async function callSupportAgent(
       htmlOutput += "<ul>";
       filteredChunks.forEach((chunk: any) => {
         htmlOutput += `<div style="overflow-x: auto;">`;
-        htmlOutput += `<div style="display: flex;">`;
-        filteredChunks.forEach((chunk: any) => {
-          htmlOutput += `<div style="border: 1px solid black; padding: 10px; margin: 10px;">`;
-          htmlOutput += `<h3>Document ID: ${chunk.documentId}</h3>`;
-          htmlOutput += `<p>Chunk Number: ${chunk.chunkNumber}</p>`;
-          htmlOutput += `<p>Body: ${chunk.body}</p>`;
-          htmlOutput += `<p>Similarity Score: ${chunk.similarity_score}</p>`;
-          htmlOutput += `</div>`;
-        });
+        htmlOutput += `<div style="border: 1px solid black; padding: 10px; margin: 10px;">`;
+        htmlOutput += `<h3>Document ID: ${chunk.documentId}</h3>`;
+        htmlOutput += `<p>Chunk Number: ${chunk.chunkNumber}</p>`;
+        htmlOutput += `<p>Body: ${chunk.body}</p>`;
+        htmlOutput += `<p>Similarity Score: ${chunk.similarity_score}</p>`;
         htmlOutput += `</div>`;
         htmlOutput += `</div>`;
       });

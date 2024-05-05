@@ -6,9 +6,14 @@ import {
 export async function callCatalogSearchAgent(
   customerId: number = -1,
   productId: number = -1,
+  email: string = "",
   query: string,
   isSeller: boolean = false
 ) {
+  if (customerId === -1 && email === "") {
+    console.error("ERROR: No customer ID or email provided.");
+    return null;
+  }
   try {
     // add query to queries table
     // TODO: figure out how to get queryID, productID
@@ -20,6 +25,7 @@ export async function callCatalogSearchAgent(
       queryId = await addQueryToSingleStore(
         productId,
         customerId,
+        email,
         "TEST ANSWER",
         query
       );

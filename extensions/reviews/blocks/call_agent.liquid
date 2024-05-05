@@ -7,92 +7,212 @@
     type="module"
     src="https://unpkg.com/deep-chat@1.4.11/dist/deepChat.bundle.js"
   ></script>
+  <script>
+    function checkEmail(emailAddress) {
+        var sQtext = '[^\\x0d\\x22\\x5c\\x80-\\xff]';
+        var sDtext = '[^\\x0d\\x5b-\\x5d\\x80-\\xff]';
+        var sAtom = '[^\\x00-\\x20\\x22\\x28\\x29\\x2c\\x2e\\x3a-\\x3c\\x3e\\x40\\x5b-\\x5d\\x7f-\\xff]+';
+        var sQuotedPair = '\\x5c[\\x00-\\x7f]';
+        var sDomainLiteral = '\\x5b(' + sDtext + '|' + sQuotedPair + ')*\\x5d';
+        var sQuotedString = '\\x22(' + sQtext + '|' + sQuotedPair + ')*\\x22';
+        var sDomain_ref = sAtom;
+        var sSubDomain = '(' + sDomain_ref + '|' + sDomainLiteral + ')';
+        var sWord = '(' + sAtom + '|' + sQuotedString + ')';
+        var sDomain = sSubDomain + '(\\x2e' + sSubDomain + ')*';
+        var sLocalPart = sWord + '(\\x2e' + sWord + ')*';
+        var sAddrSpec = sLocalPart + '\\x40' + sDomain; // complete RFC822 email address spec
+        var sValidEmail = '^' + sAddrSpec + '$'; // as whole string
+
+        var reValidEmail = new RegExp(sValidEmail);
+
+        return reValidEmail.test(emailAddress);
+    }
+  </script>
   <body>
     <!-- Attributes can be set as strings either directly on the element (demo/textInput) or via a `setAttribute` method on its reference (introMessage).
       When passing JSON objects make sure that they are first correctly stringified (use the following tool https://jsonlint.com/), functions assigned
       to properties must not have external references and all regex values are properly escaped.
       You can also pass values into the component via properties by using the element reference (initialMessages).
       -->`
-    <deep-chat
-      id="chat-element"
-      style="border-radius: 10px; position: fixed; bottom: 10px; right: 2%; z-index: 1; font-size: 1rem;"
-      
-      textInput='{
-        "styles": {
-          "container": {
-            "width": "100%",
-            "margin": "0",
-            "border": "unset",
-            "borderTop": "1px solid #d5d5d5",
-            "borderRadius": "0px",
-            "boxShadow": "unset"
-          },
-          "text": {
-            "fontSize": "1.05em",
-            "paddingTop": "11px",
-            "paddingBottom": "13px",
-            "paddingLeft": "12px",
-            "paddingRight": "2.4em"
-          }
-        },
-        "placeholder": {"text": "Type a message...", "style": {"color": "#bcbcbc"}}
-      }'
-      submitButtonStyles='{
-        "submit": {
-          "container": {
-            "default": {
-              "transform": "scale(1.21)",
-              "marginBottom": "-3px",
-              "marginRight": "0.4em"
-            }
-          }
-        }
-      }'
+    <div id="chat-container" style="position: fixed; bottom: 10px; right: 2%; z-index: 1;">
+        <button id="chat-toggle" style="border-radius: 50%; width: 50px; height: 50px; background-color: #5900ff; color: white; font-size: 1.2rem; border: none; outline: none;">
+            <span id="chat-toggle-icon" style="display: flex; justify-content: center; align-items: center;">
+               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#007bff" width="36px" height="36px" style="transform: scaleX(-1);">
+    <path d="M0 0h24v24H0z" fill="none"/>
+    <path d="M12 2C6.48 2 2 6.48 2 12c0 1.74.46 3.41 1.32 4.87l-1.4 1.4C.45 16.27 0 14.19 0 12 0 5.37 5.37 0 12 0s12 5.37 12 12c0 2.19-.45 4.27-1.32 6.13l-1.4-1.4C21.54 15.41 22 13.74 22 12c0-5.52-4.48-10-10-10zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-9h2v4h-2v-4zm0-6h2v2h-2V5z"/>
+</svg>
 
-        demo="true"
-    >
-    </deep-chat>
+            </span>
+        </button>
+        <div id="chat-element" style="display: none;">
+            <deep-chat
+                id = "chat"
+                style="border-radius: 10px; width: 28vw; height: calc(74vh - 70px); font-size: 1.5rem;"
+                messageStyles='{
+                    "default": {
+                        "shared": {"bubble": {"borderRadius": "0px"}},
+                        "user": {"bubble": {"backgroundColor": "#6c00ff"}}
+                    }
+                }'
+                avatars="true"
+                inputAreaStyle='{"backgroundColor": "#eeeeee"}'
+                textInput='{
+                    "styles": {
+                        "container": {
+                            "backgroundColor": "white",
+                            "borderRadius": "0px",
+                            "boxShadow": "unset",
+                            "width": "70%",
+                            "marginLeft": "-40px"
+                        }
+                    }
+                }'
+                submitButtonStyles='{
+                    "position": "outside-right",
+                    "submit": {
+                        "container": {
+                            "default": {
+                                "backgroundColor": "#5900ff",
+                                "marginBottom": "0.1em",
+                                "marginLeft": "10px",
+                                "borderRadius": "0px"
+                            },
+                            "hover": {"backgroundColor": "#4d00dc"},
+                            "click": {"backgroundColor": "#3b00a8"}
+                        },
+                        "text": {
+                            "content": "Send",
+                            "styles": {"default": {"color": "white", "height": "1.78em", "width": "3em", "fontSize": "0.95em"}}
+                        }
+                    },
+                    "loading": {"container": {"default": {"backgroundColor": "#afafaf"}}},
+                    "stop": {
+                        "container": {
+                            "default": {"backgroundColor": "#919191"},
+                            "hover": {"backgroundColor": "#8c8c8c"},
+                            "click": {"backgroundColor": "#818181"}
+                        },
+                        "text": {"content": "Stop"}
+                    },
+                    "disabled": {"container": {"default": {"backgroundColor": "#afafaf"}}}
+                }'
+                auxiliaryStyle="
+                    ::-webkit-scrollbar-thumb {
+                        background-color: #5900ff;
+                    }"
+          
+            >
+            </deep-chat>
+        </div>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById("chat-container");
+        const chatToggle = document.getElementById("chat-toggle");
+        const chatElement = document.getElementById("chat-element");
+        const chatToggleIcon = document.getElementById("chat-toggle-icon");
+
+        chatToggle.addEventListener("click", () => {
+            if (chatElement.style.display === "none") {
+                chatElement.style.display = "block";
+                chatToggleIcon.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="18px" height="18px">
+                        <path d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M12 2C6.48 2 2 6.48 2 12c0 1.74.46 3.41 1.32 4.87l-1.4 1.4C.45 16.27 0 14.19 0 12 0 5.37 5.37 0 12 0s12 5.37 12 12c0 2.19-.45 4.27-1.32 6.13l-1.4-1.4C21.54 15.41 22 13.74 22 12c0-5.52-4.48-10-10-10zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-9h2v4h-2v-4zm0-6h2v2h-2V5z"/>
+                    </svg>
+                `;
+            } else {
+                chatElement.style.display = "none";
+                chatToggleIcon.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="18px" height="18px">
+                        <path d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M12 2C6.48 2 2 6.48 2 12c0 1.74.46 3.41 1.32 4.87l-1.4 1.4C.45 16.27 0 14.19 0 12 0 5.37 5.37 0 12 0s12 5.37 12 12c0 2.19-.45 4.27-1.32 6.13l-1.4-1.4C21.54 15.41 22 13.74 22 12c0-5.52-4.48-10-10-10zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-9h2v4h-2v-4zm0-6h2v2h-2V5z"/>
+                    </svg>
+                `;
+            }
+        });
+    </script>
   </body>
   <!-- !!Either set the script as "module" or place your code in a timeout in order to wait for the component to load -->
   <script type="module">
     let searchType = "";
+    const chat = document.getElementById("chat");
     const customerId = {{customer.id | json}};
+    const customerName = {{customer.name | json}};
     const productId = {{product.id | json}};
-    const elementRef = document.getElementById("chat-element");
-    elementRef.initialMessages = [
-        {
-            text: "Welcome to CO2 Meter! How can I help?",
-            role: 'ai',
-        },
-        {
-            html: `
-            <div class="deep-chat-temporary-message">
-                <button class="deep-chat-button deep-chat-suggestion-button" style="border: 1px solid blue">Support Search</button>
-                <button class="deep-chat-button deep-chat-suggestion-button" style="border: 1px solid blue">Catalog Search</button>
-                <button class="deep-chat-button deep-chat-suggestion-button" style="border: 1px solid blue">Specific Product Search</button>
-            </div>
-            </div>`,
-        },
-    ];
-    elementRef.request = {
+    let email = "";
+
+    if (customerId == null) {
+        chat.initialMessages = [
+            {
+                text: "Welcome to CO2 Meter! Please enter your email address to continue:",
+                role: 'ai',
+            },
+        ];
+    } else {
+        chat.initialMessages = [
+            {
+                text: "Hi " + customerName + ". Welcome to CO2 Meter! How can I help?",
+                role: 'ai',
+            },
+            {
+                html: `
+                <div class="deep-chat-temporary-message">
+                    <button class="deep-chat-button deep-chat-suggestion-button" style="border: 1px solid blue">Support Search</button>
+                    <button class="deep-chat-button deep-chat-suggestion-button" style="border: 1px solid blue">Catalog Search</button>
+                    <button class="deep-chat-button deep-chat-suggestion-button" style="border: 1px solid blue">Specific Product Search</button>
+                </div>
+                </div>`,
+            },
+        ];
+    }
+    chat.request = {
         handler: async (body, signals) => {
             if (body.messages[0].text == "Support Search") {
-                searchType = "support";
-                signals.onResponse({text: "Great, looks like you need help with a general inquiry, please enter your query:"});
-            } else if (body.messages[0].text == "Catalog Search") {
-                searchType = "catalog";
-                signals.onResponse({text: "Great, looks like you'd like to search over our catalog. What are you looking for?"});
-            } else if (body.messages[0].text == "Specific Product Search") {
-                if (productId == null) {
-                    signals.onResponse({text: "Sorry, I can't help you with this. Please select a product first."});
+                if (email == "" && customerId == null) {
+                    signals.onResponse({text: "Sorry, I can't help you with this yet. Please enter your email first."});
                 } else {
-                    searchType = "product";
-                    signals.onResponse({text: "Great, looks like you want to know more about this product! Please enter your query:"});
+                    searchType = "support";
+                    signals.onResponse({text: "Great, looks like you need help with a general inquiry, please enter your query:"});
                 }
+            } else if (body.messages[0].text == "Catalog Search") {
+                if (email == "" && customerId == null) {
+                    signals.onResponse({text: "Sorry, I can't help you with this yet. Please enter your email first."});
+                } else {
+                    searchType = "catalog";
+                    signals.onResponse({text: "Great, looks like you'd like to search over our catalog. What are you looking for?"});
+                }
+            } else if (body.messages[0].text == "Specific Product Search") {
+                if (email == "" && customerId == null) {
+                    signals.onResponse({text: "Sorry, I can't help you with this. Please enter your email first."});
+                } else {
+                    if (productId == null) {
+                        signals.onResponse({text: "Sorry, I can't help you with this. Please select a product first."});
+                    } else {
+                        searchType = "product";
+                        signals.onResponse({text: "Great, looks like you want to know more about this product! Please enter your query:"});
+                    } 
+                }
+            } else if (body.messages[0].text == "Can't find an answer? Open Ticket") {
+                searchType = "ticket";
+                signals.onResponse({text: "Sorry I couldn't answer your question, I'll get someone on it right away. What would you like them to know?"});
+            } else if (checkEmail(body.messages[0].text)) {
+                email = body.messages[0].text;
+                console.log("Email entered:", email);
+
+                let htmlString = 
+                    `<div class="deep-chat-temporary-message">
+                            <button class="deep-chat-button deep-chat-suggestion-button" style="border: 1px solid blue">Support Search</button>
+                            <button class="deep-chat-button deep-chat-suggestion-button" style="border: 1px solid blue">Catalog Search</button>
+                            <button class="deep-chat-button deep-chat-suggestion-button" style="border: 1px solid blue">Specific Product Search</button>
+                        </div>`;
+
+                signals.onResponse({text: "Thank you! Email submitted:", html: htmlString });
             } else {
                 try {
                     const data = {
-                        "userId": customerId,
+                        "customerId": customerId,
+                        "email": email,
                         "productId": productId,
                         "agentQuery": (body.messages)[0].text,
                         "searchType": searchType
@@ -106,14 +226,24 @@
                     });
 
                     const responseData = await response.json();
-                    console.log("API response:", responseData.html);
+                    console.log("API response:", responseData.text + responseData.html);
+                    let openTicketHTML = 
+                    `
+                    <div class="deep-chat-temporary-message">
+                        <button class="deep-chat-button deep-chat-suggestion-button" style="border: 1px solid blue">Can't find an answer? Open Ticket</button>
+                    </div>
+                    `;
                     let htmlString = 
                     `<div class="deep-chat-temporary-message">
                             <button class="deep-chat-button deep-chat-suggestion-button" style="border: 1px solid blue">Support Search</button>
                             <button class="deep-chat-button deep-chat-suggestion-button" style="border: 1px solid blue">Catalog Search</button>
                             <button class="deep-chat-button deep-chat-suggestion-button" style="border: 1px solid blue">Specific Product Search</button>
                         </div>`;
-                    signals.onResponse({html: responseData.html + htmlString}); // displays the response text message
+
+                    if (searchType == "product" || searchType == "support") {
+                        htmlString = openTicketHTML + htmlString;
+                    }
+                    signals.onResponse({text: responseData.text, html: responseData.html + htmlString }); // displays the response text message
                   
                 } catch (e) {
                     signals.onResponse({error: 'Error'}); // displays an error message
@@ -128,204 +258,6 @@
 </html>
 
 
-{% comment %} <script>
-    const resizableContainer = document.querySelector('#resizableContainer');
-    const toggleButton = document.querySelector('#toggleButton');
-    const firstDiv = document.querySelector('#firstDiv');
-    const secondDiv = document.querySelector('div[style*="max-height: 80vh;"]');
-    const relevantReviewsDiv = document.querySelector('#relevant-reviews');
-    const originalHeight = secondDiv.style.maxHeight;
-    let isMinimized = false;
-
-    let tempRelevantInnerHTML = relevantReviewsDiv.innerHTML;
-    let tempFirstInnerHTML = firstDiv.innerHTML;
-
-    toggleButton.addEventListener('click', function() {
-        if (isMinimized) {
-            secondDiv.style.maxHeight = originalHeight;
-            resizableContainer.style.height = 'auto';
-            firstDiv.innerHTML = tempFirstInnerHTML;
-            relevantReviewsDiv.innerHTML = tempRelevantInnerHTML;
-            isMinimized = false;
-        } else {
-            tempRelevantInnerHTML = relevantReviewsDiv.innerHTML;
-            tempFirstInnerHTML = firstDiv.innerHTML;
-            relevantReviewsDiv.innerHTML = ''; // Clear the contents of the relevant-reviews div
-            firstDiv.innerHTML = '<p id="prompt"></p><p id="output"></p><p id="pd_output"></p>'; // Clear the contents of the firstDiv
-            resizableContainer.style.height = 'fit-content';
-            isMinimized = true;
-        }
-    });
-</script>
-
-
-<script>
-    const productButton = document.querySelector('#productAgentButton');
-    const supportButton = document.querySelector('#supportAgentButton');
-    const customerId = {{customer.id | json}};
-    const productId = {{product.id | json}};
-    productButton.addEventListener('click', async function(event) {
-        event.preventDefault();
-        const input = document.querySelector('#myInput');
-        const value = input.value;
-        console.log("Button clicked with value:", value);
-       
-        const data = { customerId: customerId, productId: productId, agentQuery: value, userMode: false, tableToQuery: "Review", caller: "user"};
-
-        const response = await fetch('/apps/my_app/agent/callProductAgent', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        });
-
-        if (true) {
-            const responseData = await response.json();
-            // const responseData = {
-            //     "prompt": "is this a good board for beginners?",
-            //     "sqlQuery": "SELECT Review.reviewId, Embeddings.chunkNumber, DOT_PRODUCT(Embeddings.chunkEmbedding, Query.semanticEmbedding) AS similarity_score FROM Review CROSS JOIN (SELECT semanticEmbedding FROM Queries WHERE queryId = 1125899906842663) AS Query JOIN Embeddings ON Review.reviewId = Embeddings.reviewId WHERE Review.productId = 9064572584236 ORDER BY similarity_score DESC LIMIT 25",
-            //     "result": "[{\"reviewId\":\"541402859\",\"chunkNumber\":\"7\",\"similarity_score\":0.6162167191505432},{\"reviewId\":\"559358795\",\"chunkNumber\":\"1\",\"similarity_score\":0.5675077438354492},{\"reviewId\":\"541402859\",\"chunkNumber\":\"6\",\"similarity_score\":0.5313129425048828},{\"reviewId\":\"541402859\",\"chunkNumber\":\"4\",\"similarity_score\":0.5270801186561584},{\"reviewId\":\"541402859\",\"chunkNumber\":\"5\",\"similarity_score\":0.5100563168525696},{\"reviewId\":\"541403433\",\"chunkNumber\":\"4\",\"similarity_score\":0.4970254898071289},{\"reviewId\":\"541402859\",\"chunkNumber\":\"3\",\"similarity_score\":0.48070865869522095},{\"reviewId\":\"541402777\",\"chunkNumber\":\"7\",\"similarity_score\":0.46865275502204895},{\"reviewId\":\"541400473\",\"chunkNumber\":\"5\",\"similarity_score\":0.46468254923820496},{\"reviewId\":\"541402859\",\"chunkNumber\":\"2\",\"similarity_score\":0.4603654742240906},{\"reviewId\":\"541401162\",\"chunkNumber\":\"10\",\"similarity_score\":0.4475940763950348},{\"reviewId\":\"541402777\",\"chunkNumber\":\"6\",\"similarity_score\":0.44403091073036194},{\"reviewId\":\"541401162\",\"chunkNumber\":\"4\",\"similarity_score\":0.4402925372123718},{\"reviewId\":\"541401450\",\"chunkNumber\":\"3\",\"similarity_score\":0.4373763203620911},{\"reviewId\":\"541400473\",\"chunkNumber\":\"9\",\"similarity_score\":0.43698692321777344},{\"reviewId\":\"541403433\",\"chunkNumber\":\"10\",\"similarity_score\":0.4361833333969116},{\"reviewId\":\"541402777\",\"chunkNumber\":\"1\",\"similarity_score\":0.42992305755615234},{\"reviewId\":\"541402777\",\"chunkNumber\":\"3\",\"similarity_score\":0.4289529025554657},{\"reviewId\":\"541402597\",\"chunkNumber\":\"3\",\"similarity_score\":0.427096039056778},{\"reviewId\":\"541402859\",\"chunkNumber\":\"1\",\"similarity_score\":0.42250657081604},{\"reviewId\":\"541401162\",\"chunkNumber\":\"6\",\"similarity_score\":0.4183912873268128},{\"reviewId\":\"541402597\",\"chunkNumber\":\"4\",\"similarity_score\":0.4133223593235016},{\"reviewId\":\"541402777\",\"chunkNumber\":\"2\",\"similarity_score\":0.4057558476924896},{\"reviewId\":\"541410439\",\"chunkNumber\":\"8\",\"similarity_score\":0.4049195945262909},{\"reviewId\":\"541403906\",\"chunkNumber\":\"2\",\"similarity_score\":0.4043036699295044}]",
-            //     "error": "",
-            //     "output": "Based on the reviews provided, the Burton Custom Snowboard seems to be a good choice for beginners. \n\n1. Reviewer with ID 5965716979801 mentions that as a beginner, they found learning to snowboard a breeze with the Burton Custom Snowboard. The edge control was intuitive, the board felt stable, and the forgiving flex helped cushion falls and find balance (ReviewID: 541402859).\n\n2. Another reviewer with the same ID also upgraded to the Burton Custom Snowboard as a relatively new snowboarder and was impressed with the performance. They found the edge control solid, stability and balance improved, and the flex suitable for beginners (ReviewID: 541402777).\n\n3. A different reviewer who identified themselves as a beginner also found the Burton Custom Snowboard to be a nice board for beginners and did not notice any significant handling issues mentioned by others (ReviewID: 559358795).\n\nOverall, based on these reviews, it appears that the Burton Custom Snowboard is indeed a good choice for beginners looking to improve their snowboarding skills."
-            // };
-            console.log("API response:", responseData);
-            // Parse the response data here
-            const prompt = responseData.prompt;
-            const sqlQuery = responseData.sqlQuery;
-            const result = responseData.result;
-            const error = responseData.error;
-            const output = responseData.output;
-            const pd_output = responseData.productDescriptionOutput;
-
-            const uniqueReviewIds = [...new Set(JSON.parse(result).map(item => item.reviewId))];
-             
-            let reviews = [];
-            async function fetchReviewData(reviewId) {
-                const data = { reviewId: reviewId };
-                const response = await fetch('/apps/my_app/reviews/fetchOne', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data),
-                });
-
-                if (response.ok) {
-                    const responseData = await response.json();
-                    console.log("Judge API response:", responseData);
-
-                    const reviewRating = responseData.review.rating;
-                    const reviewTitle = responseData.review.title;
-                    const reviewBody = responseData.review.body;
-
-                    return { reviewId: reviewId, reviewRating: reviewRating, reviewTitle: reviewTitle, reviewBody: reviewBody };
-                } else {
-                    console.error("API call failed with status:", response.status);
-                    return null;
-                }
-            }
-
-            async function fetchReviews() {
-                const reviewPromises = uniqueReviewIds.map(async (reviewId) => {
-                    return await fetchReviewData(reviewId);
-                });
-
-                const fetchedReviews = await Promise.all(reviewPromises);
-                const filteredReviews = fetchedReviews.filter(review => review !== null);
-
-                console.log("reviews");
-                console.log(filteredReviews);
-
-                return filteredReviews;
-            }
-
-            (async () => {
-                reviews = await fetchReviews();
-
-                let relevantReviews = reviews.map(review => `${review.reviewTitle}\n${review.reviewBody}\nRating: ${review.reviewRating}\n`).join("\n");
-
-                console.log(reviews.length);
-                // Pass the data to frontend
-                const promptElement = document.querySelector('#prompt');
-                const outputElement = document.querySelector('#output');
-                const relevantReviewsElement = document.querySelector('#relevant-reviews');
-
-                // Create a container for each review
-                const reviewContainers = reviews.map(review => {
-                    const container = document.createElement('div');
-                    container.classList.add('review-container');
-
-                    const titleElement = document.createElement('h3');
-                    titleElement.textContent = review.reviewTitle;
-                    container.appendChild(titleElement);
-
-                    const bodyElement = document.createElement('p');
-                    bodyElement.textContent = review.reviewBody;
-                    container.appendChild(bodyElement);
-
-                    const ratingElement = document.createElement('p');
-                    ratingElement.textContent = `Rating: ${review.reviewRating}`;
-                    container.appendChild(ratingElement);
-
-                    return container;
-                });
-
-                // Append the review containers to the relevant reviews element
-                reviewContainers.forEach(container => {
-                    relevantReviewsElement.appendChild(container);
-                });
-
-                // Apply CSS styles to make the containers scrollable
-                relevantReviewsElement.style.overflow = 'auto';
-                relevantReviewsElement.style.maxHeight = '300px';
-                isMinimized = false;
-                minimizeButton.textContent = 'Minimize';
-
-                promptElement.innerHTML = prompt;
-                outputElement.innerHTML = output;
-            })();
-            let relevantReviews = reviews.map(review => `${review.reviewTitle}\n${review.reviewBody}\nRating: ${review.reviewRating}\n`).join("\n");
-
-
-            console.log(reviews.length);
-            // Pass the data to frontend
-            const promptElement = document.querySelector('#prompt');
-            const outputElement = document.querySelector('#output');
-            const productDescriptionOutputElement = document.querySelector('#pd_output');
-            const relevantReviewsElement = document.querySelector('#relevant-reviews');
-
-            promptElement.innerHTML = prompt;
-            outputElement.innerHTML = output;
-            productDescriptionOutputElement.innerHTML = pd_output;
-            relevantReviewsElement.innerHTML = relevantReviews;
-        } else {
-            console.error("API call failed with status:", response.status);
-        }
-    });
-
-    supportButton.addEventListener('click', async function(event) {
-        event.preventDefault();
-        const input = document.querySelector('#myInput');
-        const value = input.value;
-        console.log("Button clicked with value:", value);
-       
-        const data = { userId: customerId, productId: productId, agentQuery: value};
-        console.log(productId);
-
-        const response = await fetch('/apps/my_app/agent/callSupportAgent', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        });
-
-       
-            const responseData = await response.json();
-            console.log("API response:", responseData);
-    });
-</script> {% endcomment %}
 
 {% schema %}
 {

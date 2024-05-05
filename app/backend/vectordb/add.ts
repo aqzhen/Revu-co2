@@ -1,7 +1,13 @@
+import { hashString } from "@shopify/shopify-api/runtime";
 import { Review } from "../../globals";
-import { getProducts } from "../api_calls";
+import {
+  getCustomerEmail,
+  getExistingCustomers,
+  getProducts,
+} from "../api_calls";
 import { chunk_string } from "../langchain/chunking";
 import { generateEmbedding } from "./misc";
+import { HashFormat } from "@shopify/shopify-api/runtime";
 
 // Adders
 export async function insertProduct(
@@ -134,10 +140,31 @@ export async function addReviewsToSingleStore(
 export async function addQueryToSingleStore(
   productId: number,
   userId: number,
+  email: string,
   answer: string,
   query: string
 ): Promise<void> {
   try {
+    if (userId == -1) {
+      userId = parseInt(hashString(email, HashFormat.Base64));
+      console.log(userId);
+    }
+    if (email == "") {
+      email = (await getCustomerEmail(userId)).email;
+    }
+
+    await singleStoreConnection.execute(
+      `
+        INSERT IGNORE INTO Users (
+            userId,
+            email
+        ) VALUES (
+            ${userId},
+            '${email}'
+        )
+        `
+    );
+
     await singleStoreConnection.execute(
       `
         INSERT IGNORE INTO Purchases (
@@ -153,6 +180,7 @@ export async function addQueryToSingleStore(
         )
         `
     );
+
     const [results, buff] = await singleStoreConnection.execute(
       `
         INSERT INTO Queries (
@@ -242,9 +270,46 @@ export async function addSellerQueryToSingleStore(
 export async function addCustomerSupportQueryToSinglestore(
   productId: number,
   userId: number,
+  email: string,
   query: string
 ): Promise<void> {
   try {
+    if (userId == -1) {
+      userId = parseInt(hashString(email, HashFormat.Base64));
+      console.log(userId);
+    }
+    if (email == "") {
+      email = (await getCustomerEmail(userId)).email;
+    }
+
+    await singleStoreConnection.execute(
+      `
+        INSERT IGNORE INTO Users (
+            userId,
+            email
+        ) VALUES (
+            ${userId},
+            '${email}'
+        )
+        `
+    );
+
+    await singleStoreConnection.execute(
+      `
+        INSERT IGNORE INTO Purchases (
+            userId,
+            productId,
+            purchased,
+            quantity
+        ) VALUES (
+            ${userId},
+            ${productId},
+            0,
+            0
+        )
+        `
+    );
+
     const [results, buff] = await singleStoreConnection.execute(
       `
         INSERT INTO Customer_Support_Queries (
@@ -353,4 +418,23 @@ export async function addAnswerToCustomerSupportQuery(
     console.error("ERROR", err);
     process.exit(1);
   }
+}
+
+export async function addExistingUsers() {
+  const existingCustomers = await getExistingCustomers();
+  const users = existingCustomers.customers;
+
+  users.map(async (user: any) => {
+    await singleStoreConnection.execute(
+      `
+        INSERT IGNORE INTO Users (
+            userId,
+            email
+        ) VALUES (
+            ${user.node.id.replace("gid://shopify/Customer/", "")},
+            '${user.node.email}'
+        )
+        `
+    );
+  });
 }

@@ -125,6 +125,68 @@ export async function getCustomerProductPurchases(customerId: number) {
   }
 }
 
+export async function getCustomerEmail(customerId: number) {
+  const response = await admin.graphql(`
+    query {
+      customer(id: "gid://shopify/Customer/${customerId}") {
+        email
+      }
+    }
+  `);
+  if (!response.ok) {
+    // Handle error if response is not ok
+    throw new Error("Failed to fetch product description");
+  }
+  const responseJson = await response.json();
+
+  return { email: responseJson.data?.customer?.email };
+}
+
+export async function getExistingCustomers() {
+  // TODO: FIGURE OUT HOW TO DO MORE THAN 250
+  const response = await admin.graphql(`
+    query {
+      customers(first: 250) { 
+        edges {
+          node {
+            id
+            email
+          }
+        }
+      }
+    }
+  `);
+  if (!response.ok) {
+    // Handle error if response is not ok
+    throw new Error("Failed to fetch customers");
+  }
+  const responseJson = await response.json();
+
+  return { customers: responseJson.data?.customers?.edges };
+}
+
+export async function getCustomerIdFromEmail(email: string) {
+  const response = await admin.graphql(`
+    query {
+      customers(first: 1, query: "${email}") {
+        edges {
+          node {
+            id
+          }
+        }
+      }
+    }
+  `);
+
+  if (!response.ok) {
+    // Handle error if response is not ok
+    throw new Error("Failed to fetch customers");
+  }
+  const responseJson = await response.json();
+
+  return { id: responseJson.data?.customers?.edges.node.id };
+}
+
 export async function getProductDescription(productId: number) {
   const response = await admin.graphql(`
     query {

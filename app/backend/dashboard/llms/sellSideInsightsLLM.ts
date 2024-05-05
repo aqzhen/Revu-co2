@@ -4,7 +4,7 @@ import { SqlDatabase } from "langchain/sql_db";
 import { DataSource } from "typeorm";
 import { Category, Query, Review } from "~/globals";
 import { getProductDescription } from "../../api_calls";
-import { getQueryClusters } from "../../clustering/queryClustering";
+import { getQueryClusters } from "../stratify/queryClustering";
 
 export async function call_windowShoppersInsightsLLM(
   productId: number,

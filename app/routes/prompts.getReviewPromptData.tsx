@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
-import { getReviewPromptData } from "~/backend/langchain/llms/reviewPromptLLM";
+import { getReviewPromptData } from "~/backend/dashboard/llms/reviewPromptLLM";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   return json({ message: "Hello, world!" });

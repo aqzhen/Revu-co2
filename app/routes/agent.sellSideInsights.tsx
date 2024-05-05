@@ -2,7 +2,7 @@ import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
 import {
   call_purchasingCustomersInsightsLLM,
   call_windowShoppersInsightsLLM,
-} from "~/backend/langchain/llms/sellSideInsightsLLM";
+} from "~/backend/dashboard/llms/sellSideInsightsLLM";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   return json({ message: "Hello, world!" });
