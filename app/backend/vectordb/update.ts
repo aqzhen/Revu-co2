@@ -1,9 +1,9 @@
+import { HashFormat, hashString } from "@shopify/shopify-api/runtime";
 import { RowDataPacket } from "mysql2";
 import {
   getCustomerIdFromEmail,
   getCustomerProductPurchases,
 } from "../api_calls";
-import { HashFormat, hashString } from "@shopify/shopify-api/runtime";
 
 export async function updatePurchasedStatus() {
   try {
@@ -32,10 +32,10 @@ export async function updatePurchasedStatus() {
         await getCustomerProductPurchases(userId)
       ).json();
 
-      console.log(
-        "Purchased products for user " + userId + " are: ",
-        purchasedProducts
-      );
+      // console.log(
+      //   "Purchased products for user " + userId + " are: ",
+      //   purchasedProducts
+      // );
 
       // attempt to match purchased products of each user with productId in productIds array
       // if match, update purchased status to 1

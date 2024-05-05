@@ -115,6 +115,30 @@ export async function createEmbeddingsTable(deleteExisting: boolean) {
   }
 }
 
+export async function createProductEmbeddingsTable(deleteExisting: boolean) {
+  try {
+    if (deleteExisting) {
+      console.log("Dropping ProductEmbeddings table");
+
+      await singleStoreConnection.execute("DROP TABLE IF EXISTS ProductEmbeddings");
+    }
+    await singleStoreConnection.execute(`
+                CREATE TABLE ProductEmbeddings (
+                    productId BIGINT,
+                    chunkNumber BIGINT,
+                    body TEXT,
+                    chunkEmbedding VECTOR(768),
+                    startIndex BIGINT,
+                    endIndex BIGINT,
+                    PRIMARY KEY (productId, chunkNumber)
+                )
+            `);
+    console.log("ProductEmbeddings table created successfully.");
+  } catch (err) {
+    console.log("ProductEmbeddings table already exists");
+  }
+}
+
 export async function createPurchasesTable(deleteExisting: boolean) {
   try {
     if (deleteExisting) {
@@ -224,4 +248,5 @@ export async function createAllTables(deleteExisting: boolean) {
   createSellerQueriesTable(deleteExisting);
   createProductsTable(deleteExisting);
   createUsersTable(deleteExisting);
+  createProductEmbeddingsTable(deleteExisting);
 }

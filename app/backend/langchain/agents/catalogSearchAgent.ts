@@ -43,6 +43,7 @@ export async function callCatalogSearchAgent(
     let allReviews;
     let productData;
 
+    // Catalog Level Search
     if (productId == -1) {
       allReviews = await langchain_db.run(
         `SELECT R.productId, R.reviewId, E.chunkNumber, E.body, DOT_PRODUCT(E.chunkEmbedding, Query.semanticEmbedding) AS similarity_score
@@ -53,12 +54,15 @@ export async function callCatalogSearchAgent(
           `
       );
       productData = await langchain_db.run(
-        `SELECT P.productId, P.description, DOT_PRODUCT(P.embedding, Query.semanticEmbedding) AS similarity_score 
-          FROM Products P CROSS JOIN (SELECT semanticEmbedding FROM Queries WHERE queryId = ${queryId}) AS Query
+        `SELECT P.productId, PE.body, PE.chunkNumber, DOT_PRODUCT(PE.chunkEmbedding, Query.semanticEmbedding) AS similarity_score 
+          FROM ProductEmbeddings PE
+          JOIN Products P ON PE.productId = P.productId CROSS JOIN (SELECT semanticEmbedding FROM Queries WHERE queryId = ${queryId}) AS Query
           ORDER BY similarity_score DESC
           LIMIT 10;`
       );
-    } else {
+    }
+    // Product Level Search 
+    else {
       allReviews = await langchain_db.run(
         `SELECT R.productId, R.reviewId, E.chunkNumber, E.body, DOT_PRODUCT(E.chunkEmbedding, Query.semanticEmbedding) AS similarity_score
           FROM Review R CROSS JOIN (SELECT semanticEmbedding FROM Queries WHERE queryId = ${queryId}) AS Query 
@@ -69,8 +73,9 @@ export async function callCatalogSearchAgent(
           `
       );
       productData = await langchain_db.run(
-        `SELECT P.productId, P.description, DOT_PRODUCT(P.embedding, Query.semanticEmbedding) AS similarity_score 
-          FROM Products P CROSS JOIN (SELECT semanticEmbedding FROM Queries WHERE queryId = ${queryId}) AS Query
+        `SELECT P.productId, PE.body, PE.chunkNumber, DOT_PRODUCT(PE.chunkEmbedding, Query.semanticEmbedding) AS similarity_score 
+          FROM ProductEmbeddings PE 
+          JOIN Products P ON PE.productId = P.productId CROSS JOIN (SELECT semanticEmbedding FROM Queries WHERE queryId = ${queryId}) AS Query
           WHERE P.productId = ${productId}
           ORDER BY similarity_score DESC
           LIMIT 10;`
@@ -83,7 +88,7 @@ export async function callCatalogSearchAgent(
 
     // console.log(JSON.parse(productData));
     let filteredPdData = JSON.parse(productData).filter(
-      (pd: any) => pd.similarity_score > 0.45
+      (pd: any) => pd.similarity_score > 0.3
     );
 
     console.log("PD Search Agent Results:" + filteredPdData.length + "\n");

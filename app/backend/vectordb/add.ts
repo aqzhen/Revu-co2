@@ -1,4 +1,4 @@
-import { hashString } from "@shopify/shopify-api/runtime";
+import { HashFormat, hashString } from "@shopify/shopify-api/runtime";
 import { Review } from "../../globals";
 import {
   getCustomerEmail,
@@ -7,7 +7,6 @@ import {
 } from "../api_calls";
 import { chunk_string } from "../langchain/chunking";
 import { generateEmbedding } from "./misc";
-import { HashFormat } from "@shopify/shopify-api/runtime";
 
 // Adders
 export async function insertProduct(
@@ -32,21 +31,71 @@ export async function insertProduct(
       )
     `
     );
-    console.log("Product added successfully.");
-    console.log(productId, title, description);
+    // console.log("Product added successfully.");
+    // console.log(productId, title, description);
   } catch (err) {
     console.error("ERROR", err);
     process.exit(1);
   }
 }
 
+export async function insertProductDescriptionChunks(
+  productId: number,
+  description: string
+): Promise<void> {
+  console.log("Inserting chunks for product ", productId);
+  const chunks = await chunk_string(description, productId);
+  let i = 1;
+  for (const chunk of chunks) {
+    try {
+      const [results, buff] = await singleStoreConnection.execute(`
+          INSERT IGNORE INTO ProductEmbeddings (
+              productId,
+              chunkNumber,
+              body,
+              startIndex,
+              endIndex
+          ) VALUES (
+              ${productId},
+              ${i},
+              '${chunk.chunkBody.replace(/'/g, "\\'")}',
+              ${chunk.startIndex},
+              ${chunk.endIndex}
+          )
+      `);
+
+      // only generate embedding if the review was added (new review)
+      if ((results as any).affectedRows > 0) {
+        const embedding = await generateEmbedding(chunk.chunkBody);
+        // Do something with the embedding
+        await singleStoreConnection.execute(
+          `
+            UPDATE ProductEmbeddings
+            SET chunkEmbedding = ?
+            WHERE productId = ? AND chunkNumber = ?
+          `,
+          [embedding, productId, i]
+        );
+        console.log("PD Chunk added successfully for product: ", chunk.reviewId);
+      }
+      i = i + 1;
+    } catch (err) {
+      console.log("Error adding PD chunks");
+      console.log(err);
+      process.exit(1);
+    }
+  }
+}
+
 export async function addAllProducts() {
+  console.log("Adding all products");
   const productData = await (await getProducts()).json();
   productData.products.map(async (edge: any) => {
     let id: number = Number(
       edge?.node?.id.replace("gid://shopify/Product/", "")
     );
     await insertProduct(id, edge?.node?.title, edge?.node?.description);
+    await insertProductDescriptionChunks(id, edge?.node?.description);
   });
 }
 
