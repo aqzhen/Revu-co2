@@ -21,8 +21,6 @@ export function Stratify() {
   const [purchaseStatus, setPurchaseStatus] = useState<string[] | undefined>(
     undefined
   );
-  const [purchaseStatusEnum, setPurchaseStatusEnum] =
-    useState<PurchaseStatus>();
   const [productId, setProductId] = useState<string | undefined>(undefined);
   const [segmentReviews, setSegmentReviews] = useState<string | undefined>(
     undefined
@@ -101,15 +99,15 @@ export function Stratify() {
 
   async function handleSearch() {
     setSegmentCustomers([]);
-    if (purchaseStatus && purchaseStatus[0] == "Purchased") {
-      setPurchaseStatusEnum(PurchaseStatus.PURCHASED);
-    } else if (purchaseStatus && purchaseStatus[0] == "Abandoned Cart") {
-      setPurchaseStatusEnum(PurchaseStatus.ABANDONEDCART);
-    } else if (purchaseStatus && purchaseStatus[0] == "Window Shoppers") {
-      setPurchaseStatusEnum(PurchaseStatus.WINDOW);
-    }
+    console.log("status: " + purchaseStatus![0]);
+
     const requestData = {
-      purchaseStatus: purchaseStatusEnum,
+      purchaseStatus:
+        purchaseStatus![0] == "Purchased"
+          ? 2
+          : purchaseStatus![0] == "Abandoned Cart"
+            ? 1
+            : 0,
       productId: productId,
       semanticSegmentReview: segmentReviews,
       semanticSegmentQuery: segmentQueries,

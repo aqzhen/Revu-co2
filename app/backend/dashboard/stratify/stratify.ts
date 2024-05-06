@@ -107,6 +107,23 @@ export async function createSegment(
       }
     }
   }
+  if (!overReviews && !overQueries && !overCxQueries) {
+    const [response, bufff] = await singleStoreConnection.execute(
+      `
+    SELECT u.userId, p.productId
+    FROM Users u
+    ${productId == -1 ? `JOIN Purchases p ON u.userId = p.userId` : `JOIN Purchases p ON ${productId} = p.productId AND u.userId = p.userId`}
+    WHERE (p.purchased = ${purchaseStatus === undefined ? `0 OR p.purchased = 1)` : purchaseStatus === PurchaseStatus.ABANDONEDCART || purchaseStatus === PurchaseStatus.WINDOW ? `0)` : `1)`}  
+      `
+    );
+    for (const row of response as RowDataPacket[]) {
+      if (row.userId != hashString(row.productId, HashFormat.Base64)) {
+        // just checking here if userId is dummy (this is actually redundant since all reviews are left by registered customers)
+        console.log("Adding userId: ", row.userId);
+        segmentUserIds.add(row.userId);
+      }
+    }
+  }
 
   const segment: Segment = {
     purchaseStatus,
