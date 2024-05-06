@@ -96,6 +96,78 @@ export async function callCatalogSearchAgent(
       "Reviews Search Agent Results:" + filteredReviews.length + "\n"
     );
 
+    let productInfoMap = new Map<number, any>();    
+    filteredPdData.forEach((pd: any) => {
+      let {productId, body, chunkNumber, similarity_score} = pd;
+      if (!productInfoMap.has(productId)) {
+        productInfoMap.set(productId, {
+          productDescriptionResults: 
+          [{
+            productId: productId,
+            body: body,
+            similarity_score: similarity_score,
+          }],
+          reviewsResults: []
+        });
+      } else {
+        productInfoMap.get(productId).productDescriptionResults.push({
+          productId: productId,
+          body: body,
+          similarity_score: similarity_score,
+        });
+      }
+    });
+    
+    filteredReviews.forEach((r: any) => {
+      let {productId, reviewId, body, chunkNumber, similarity_score} = r;
+      if (!productInfoMap.has(productId)) {
+        productInfoMap.set(productId, {
+          productDescriptionResults: [],
+          reviewsResults: 
+          [{
+            productId: productId,
+            reviewId: reviewId,
+            body: body,
+            chunkNumber: chunkNumber,
+            similarity_score: similarity_score,
+          }]
+        });
+      } else {
+        productInfoMap.get(productId).reviewsResults.push({
+          productId: productId,
+          reviewId: reviewId,
+          body: body,
+          chunkNumber: chunkNumber,
+          similarity_score: similarity_score,
+        });
+      }
+    });
+
+    // console.log("Product Info Map: " + [...productInfoMap] + "\n");
+    // for (let [productId, productInfo] of productInfoMap) {
+    //   console.log("Product ID: " + productId + "\n");
+    //   // console.log("Product Description Results: " + productInfo.productDescriptionResults + "\n");
+    //   for (let pd of productInfo.productDescriptionResults) {
+    //     console.log("Product ID: " + pd.productId + "\n");
+    //     console.log("Body: " + pd.body + "\n");
+    //     console.log("Similarity Score: " + pd.similarity_score + "\n");
+    //   }
+    //   // console.log("Reviews Results: " + productInfo.reviewsResults + "\n");
+    //   for (let r of productInfo.reviewsResults) {
+    //     console.log("Product ID: " + r.productId + "\n");
+    //     console.log("Review ID: " + r.reviewId + "\n");
+    //     console.log("Body: " + r.body + "\n");
+    //     console.log("Chunk Number: " + r.chunkNumber + "\n");
+    //     console.log("Similarity Score: " + r.similarity_score + "\n");
+    //   }
+    // }
+
+    const productButtonsAndDetailsHTML = generateProductButtonsAndDetails(productInfoMap);
+    console.log(productButtonsAndDetailsHTML);
+
+// // Return the concatenated HTML string
+    return {htmlString: productButtonsAndDetailsHTML};
+
     return {
       productDescriptionOutput: filteredPdData,
       reviewsOutput: filteredReviews,
@@ -105,3 +177,49 @@ export async function callCatalogSearchAgent(
     return null;
   }
 }
+
+function generateProductButtonsAndDetails(productInfoMap: Map<number, any>) {
+  let htmlString = ""; // Initialize an empty string to store the HTML
+  
+  for (let [productId, productInfo] of productInfoMap.entries()) {
+    // Generate button for the product ID
+    htmlString += `<button id=product-button-${productId} `;
+    htmlString += `onmouseover=showProductDetails(${productId}) `;
+    htmlString += `onmouseleave=hideProductDetails(${productId})>`;
+    // htmlString += `onclick="toggleProductDetails(${productId})">`;
+    htmlString += `Product ID: ${productId}</button>`;
+    
+    // Generate and append product details HTML
+    htmlString += generateProductDetails(productId, productInfo);
+  }
+  // htmlString = htmlString.replace(/(\r\n|\n|\r)/gm, "");
+  
+  return htmlString; // Return the concatenated HTML string
+}
+
+function generateProductDetails(productId: number, productInfo: { productDescriptionResults: any[]; reviewsResults: any[]; }) {
+  let detailsHTML = `<div id=product-${productId}>`;
+  detailsHTML += `<h3>Product ID: ${productId}</h3>`;
+  detailsHTML += `<h4>Product Description:</h4>`;
+  
+  // Add product description results
+  productInfo.productDescriptionResults.forEach((description: { body: any; similarity_score: any; }) => {
+    detailsHTML += `<p>${description.body}</p>`;
+    detailsHTML += `<p>Similarity Score: ${description.similarity_score}</p>`;
+  });
+  
+  detailsHTML += `<h4>Reviews:</h4>`;
+  
+  // Add reviews results
+  productInfo.reviewsResults.forEach((review: { reviewId: any; body: any; chunkNumber: any; similarity_score: any; }) => {
+    detailsHTML += `<p>Review ID: ${review.reviewId}</p>`;
+    detailsHTML += `<p>${review.body}</p>`;
+    detailsHTML += `<p>Chunk Number: ${review.chunkNumber}</p>`;
+    detailsHTML += `<p>Similarity Score: ${review.similarity_score}</p>`;
+  });
+  
+  detailsHTML += `</div>`;
+  
+  return detailsHTML;
+}
+

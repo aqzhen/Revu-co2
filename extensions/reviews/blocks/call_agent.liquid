@@ -27,6 +27,21 @@
 
         return reValidEmail.test(emailAddress);
     }
+    function showProductDetails(productId) {
+        console.log("1 - Product hovered with product id", productId);
+        const productDetails = document.getElementById(`product-${productId}`);
+        if (productDetails) {
+            productDetails.style.display = 'block';
+        }
+    }
+
+    function hideProductDetails(productId) {
+        console.log("1 - Product hovered off with product id", productId);
+        const productDetails = document.getElementById(`product-${productId}`);
+        if (productDetails) {
+            productDetails.style.display = 'none';
+        }
+    }
   </script>
   <body>
     <!-- Attributes can be set as strings either directly on the element (demo/textInput) or via a `setAttribute` method on its reference (introMessage).
@@ -112,6 +127,45 @@
         const chatElement = document.getElementById("chat-element");
         const chatToggleIcon = document.getElementById("chat-toggle-icon");
 
+        const testingProduct = document.getElementById("product-9171171868972");
+        if (testingProduct) {
+            console.log("found this product details");
+            testingProduct.style.display = "none";
+        } else {
+            console.log("did not find this product details");
+        }
+
+        {% comment %} const productButton = document.getElementById("product-button-9171190677804");
+        const productDetails = document.getElementById("product-9171190677804");
+        productTest.addEventListener("click", () => {
+            console.log("Product clicked");
+            productDetails.style.display = "none";
+        }); {% endcomment %}
+        function showProductDetails(productId) {
+            document.addEventListener('DOMContentLoaded', function() {
+                const productDetailsElement = document.getElementById("product-9171171868972"); // Will find the .some-element because it's guaranteed to be in the DOM
+                if (productDetailsElement) {
+                    console.log("found this product details");
+                    productDetailsElement.style.display = "none";
+                } else {
+                    console.log("did not find this product details");
+                } 
+            });
+            {% comment %} console.log("222 - Product hovered with product id", productId);
+            const productDetailsElement = document.getElementById("product-9171171868972");{% endcomment %}
+        }
+    
+        function hideProductDetails(productId) {
+            console.log("222 - Product hovered off with product id", productId);
+            const productDetailsElement = document.querySelector('#product-9171171868972');
+            if (productDetailsElement) {
+                console.log("found this product details");
+                productDetailsElement.style.display = "none";
+            } else {
+                console.log("did not find this product details");
+            }
+        }
+        
         chatToggle.addEventListener("click", () => {
             if (chatElement.style.display === "none") {
                 chatElement.style.display = "block";
@@ -141,7 +195,6 @@
     const customerName = {{customer.name | json}};
     const productId = {{product.id | json}};
     let email = "";
-
     if (customerId == null) {
         chat.initialMessages = [
             {
@@ -249,12 +302,24 @@
                     signals.onResponse({error: 'Error'}); // displays an error message
                 }
             }
-
-            
         }
     };
+    function showProductDetails(productId) {
+        console.log("3 - Product hovered with product id", productId);
+        const productDetails = document.getElementById(`product-${productId}`);
+        if (productDetails) {
+            productDetails.style.display = 'block';
+        }
+    }
 
-  </script>
+    function hideProductDetails(productId) {
+        console.log("3 - Product hovered off with product id", productId);
+        const productDetails = document.getElementById(`product-${productId}`);
+        if (productDetails) {
+            productDetails.style.display = 'none';
+        }
+    }
+    </script>
 </html>
 
 
