@@ -1,5 +1,4 @@
 import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
-import { text } from "stream/consumers";
 import { callCatalogSearchAgent } from "~/backend/langchain/agents/catalogSearchAgent";
 import { callSupportAgent } from "~/backend/langchain/agents/supportAgent";
 import { authenticate } from "~/shopify.server";
@@ -38,8 +37,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return {
       text: "",
       html:
-        JSON.stringify(result?.productDescriptionOutput) +
-        JSON.stringify(result?.reviewsOutput),
+        JSON.stringify(result?.htmlString)
+        // JSON.stringify(result?.productDescriptionOutput) +
+        // JSON.stringify(result?.reviewsOutput),
     };
   } else if (searchType == "product") {
     const result = await callCatalogSearchAgent(
@@ -53,8 +53,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return {
       text: "",
       html:
-        JSON.stringify(result?.productDescriptionOutput) +
-        JSON.stringify(result?.reviewsOutput),
+        result?.htmlString
+        // JSON.stringify(result?.productDescriptionOutput) +
+        // JSON.stringify(result?.reviewsOutput),
     };
   } else if (searchType == "support") {
     const result = await callSupportAgent(

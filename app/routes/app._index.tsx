@@ -1,7 +1,6 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData, useNavigation } from "@remix-run/react";
+import { useLoaderData } from "@remix-run/react";
 import {
-  BlockStack,
   Button,
   Card,
   Checkbox,
@@ -16,6 +15,7 @@ import { getProducts } from "../backend/api_calls";
 import { parseReviewsData } from "../metafield_parsers/judge";
 import { authenticate } from "../shopify.server";
 // import { addReviewsToDatabase } from "./backend/prisma/helpers";
+import { addExistingUsers } from "~/backend/vectordb/add";
 import { createAllTables } from "~/backend/vectordb/create";
 import { getAllUsers, getCxQueries } from "~/backend/vectordb/get";
 import { initializeDBconnections } from "~/backend/vectordb/misc";
@@ -25,9 +25,6 @@ import {
 } from "~/backend/vectordb/update";
 import { Chunk } from "../backend/langchain/chunking";
 import { Category, Query, Review, ReviewPrompt, User } from "../globals";
-import { addExistingUsers } from "~/backend/vectordb/add";
-import { Workflows } from "~/frontend/components/Workflows";
-import EmailSender from "~/frontend/components/emailSender";
 
 // trigger action to get reviews
 const initializeReviews = async (
@@ -107,7 +104,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   console.log("Loading products");
   const productData = await (await getProducts()).json();
-  // addAllProducts();
+  // await addAllProducts();
   const cxQueries = await getCxQueries();
 
   return {

@@ -43,7 +43,7 @@ export function generateTableData(user: User): any[][] {
     tableData.push([productId, queriesArray, reviewIdsArray]);
   });
 
-  console.log(tableData);
+  // console.log(tableData);
   return tableData;
   // return [["a", "b", "c"], ["a2", "b2", "c2"]];
 }

@@ -1,9 +1,9 @@
+import { HashFormat, hashString } from "@shopify/shopify-api/runtime";
 import { RowDataPacket } from "mysql2";
 import {
   getCustomerIdFromEmail,
   getCustomerProductPurchases,
 } from "../api_calls";
-import { HashFormat, hashString } from "@shopify/shopify-api/runtime";
 
 export async function updatePurchasedStatus() {
   try {

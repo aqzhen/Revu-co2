@@ -115,6 +115,32 @@ export async function createEmbeddingsTable(deleteExisting: boolean) {
   }
 }
 
+export async function createProductEmbeddingsTable(deleteExisting: boolean) {
+  try {
+    if (deleteExisting) {
+      console.log("Dropping ProductEmbeddings table");
+
+      await singleStoreConnection.execute(
+        "DROP TABLE IF EXISTS ProductEmbeddings"
+      );
+    }
+    await singleStoreConnection.execute(`
+                CREATE TABLE ProductEmbeddings (
+                    productId BIGINT,
+                    chunkNumber BIGINT,
+                    body TEXT,
+                    chunkEmbedding VECTOR(768),
+                    startIndex BIGINT,
+                    endIndex BIGINT,
+                    PRIMARY KEY (productId, chunkNumber)
+                )
+            `);
+    console.log("ProductEmbeddings table created successfully.");
+  } catch (err) {
+    console.log("ProductEmbeddings table already exists");
+  }
+}
+
 export async function createPurchasesTable(deleteExisting: boolean) {
   try {
     if (deleteExisting) {
@@ -242,15 +268,6 @@ export async function createSegmentsTable(deleteExisting: boolean) {
   }
 }
 
-export async function deleteSellerQueriesTable() {
-  try {
-    await singleStoreConnection.execute("DROP TABLE IF EXISTS Seller_Queries");
-    console.log("Deleted Seller_Queries table successfully.");
-  } catch (err) {
-    console.log("Seller_Queries table does not exist.");
-  }
-}
-
 export async function createAllTables(deleteExisting: boolean) {
   createCustomerSupportCorpusTable(deleteExisting);
   createCustomerSupportQueriesTable(deleteExisting);
@@ -258,9 +275,8 @@ export async function createAllTables(deleteExisting: boolean) {
   createPurchasesTable(deleteExisting);
   createQueriesTable(deleteExisting);
   createReviewTable(deleteExisting);
-  // createSellerQueriesTable(deleteExisting);
-  deleteSellerQueriesTable();
   createProductsTable(deleteExisting);
   createUsersTable(deleteExisting);
   createSegmentsTable(deleteExisting);
+  createProductEmbeddingsTable(deleteExisting);
 }

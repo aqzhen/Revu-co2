@@ -9,7 +9,7 @@ export async function getReviewChunksInfo(
   chunkNumbers: number[]
 ): Promise<{ chunks: Chunk[] }> {
   try {
-    console.log("Getting review chunks", reviewIDs, chunkNumbers);
+    // console.log("Getting review chunks", reviewIDs, chunkNumbers);
     const chunks: Chunk[] = [];
     for (let i = 0; i < reviewIDs.length; i++) {
       const reviewID = reviewIDs[i];
@@ -111,7 +111,7 @@ export async function getAllUsers() {
   const promises = [];
   // Iterate through the set using for...of loop
   for (const userId of userIds) {
-    console.log("generating for user", userId);
+    // console.log("generating for user", userId);
 
     // Await getUser(userId) within the loop
     const response = await getUser(userId);

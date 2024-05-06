@@ -27,6 +27,21 @@
 
         return reValidEmail.test(emailAddress);
     }
+    function showProductDetails(productId) {
+        console.log("1 - Product hovered with product id", productId);
+        const productDetails = document.getElementById(`product-${productId}`);
+        if (productDetails) {
+            productDetails.style.display = 'block';
+        }
+    }
+
+    function hideProductDetails(productId) {
+        console.log("1 - Product hovered off with product id", productId);
+        const productDetails = document.getElementById(`product-${productId}`);
+        if (productDetails) {
+            productDetails.style.display = 'none';
+        }
+    }
   </script>
   <body>
     <!-- Attributes can be set as strings either directly on the element (demo/textInput) or via a `setAttribute` method on its reference (introMessage).
@@ -141,7 +156,6 @@
     const customerName = {{customer.name | json}};
     const productId = {{product.id | json}};
     let email = "";
-
     if (customerId == null) {
         chat.initialMessages = [
             {
@@ -249,12 +263,9 @@
                     signals.onResponse({error: 'Error'}); // displays an error message
                 }
             }
-
-            
         }
     };
-
-  </script>
+    </script>
 </html>
 
 

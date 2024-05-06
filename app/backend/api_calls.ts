@@ -121,7 +121,8 @@ export async function getCustomerProductPurchases(customerId: number) {
     return json({ productIds: productIds });
   } catch (error) {
     // Handle error
-    throw new Error("Failed to fetch customer product purchases");
+    console.error("Error fetching customer product purchases", error);
+    return json({ productIds: [] });
   }
 }
 
