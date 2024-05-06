@@ -183,11 +183,11 @@ function generateProductButtonsAndDetails(productInfoMap: Map<number, any>) {
   
   for (let [productId, productInfo] of productInfoMap.entries()) {
     // Generate button for the product ID
-    htmlString += `<button id=product-button-${productId} `;
-    htmlString += `onmouseover=showProductDetails(${productId}) `;
-    htmlString += `onmouseleave=hideProductDetails(${productId})>`;
-    // htmlString += `onclick="toggleProductDetails(${productId})">`;
-    htmlString += `Product ID: ${productId}</button>`;
+    // htmlString += `<button id=product-button-${productId} `;
+    // // htmlString += `onmouseover=showProductDetails(${productId}) `;
+    // // htmlString += `onmouseleave=hideProductDetails(${productId})>`;
+    // htmlString += `onclick=document.getElementById('product-${productId}').style.display='block';>`;
+    // htmlString += `Product ID: ${productId}</button>`;
     
     // Generate and append product details HTML
     htmlString += generateProductDetails(productId, productInfo);
@@ -198,24 +198,30 @@ function generateProductButtonsAndDetails(productInfoMap: Map<number, any>) {
 }
 
 function generateProductDetails(productId: number, productInfo: { productDescriptionResults: any[]; reviewsResults: any[]; }) {
-  let detailsHTML = `<div id=product-${productId}>`;
+  let detailsHTML = `<div id=product-${productId} style=${`display: none;`}> `;
   detailsHTML += `<h3>Product ID: ${productId}</h3>`;
   detailsHTML += `<h4>Product Description:</h4>`;
   
+  if (productInfo.productDescriptionResults.length === 0) {
+    detailsHTML += `<p><em>No relevant product description results found.</em></p>`;
+  }
   // Add product description results
   productInfo.productDescriptionResults.forEach((description: { body: any; similarity_score: any; }) => {
-    detailsHTML += `<p>${description.body}</p>`;
-    detailsHTML += `<p>Similarity Score: ${description.similarity_score}</p>`;
+    detailsHTML += `<p><em>${description.body}</em></p>`;
+    // detailsHTML += `<p>Similarity Score: ${description.similarity_score}</p>`;
   });
   
   detailsHTML += `<h4>Reviews:</h4>`;
   
+  if (productInfo.reviewsResults.length === 0) {
+    detailsHTML += `<p><em>No relevant reviews found.</em></p>`;
+  }
   // Add reviews results
   productInfo.reviewsResults.forEach((review: { reviewId: any; body: any; chunkNumber: any; similarity_score: any; }) => {
     detailsHTML += `<p>Review ID: ${review.reviewId}</p>`;
-    detailsHTML += `<p>${review.body}</p>`;
-    detailsHTML += `<p>Chunk Number: ${review.chunkNumber}</p>`;
-    detailsHTML += `<p>Similarity Score: ${review.similarity_score}</p>`;
+    detailsHTML += `<p><em>${review.body}</em></p>`;
+    // detailsHTML += `<p>Chunk Number: ${review.chunkNumber}</p>`;
+    // detailsHTML += `<p>Similarity Score: ${review.similarity_score}</p>`;
   });
   
   detailsHTML += `</div>`;
