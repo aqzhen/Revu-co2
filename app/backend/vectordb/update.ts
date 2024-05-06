@@ -22,7 +22,7 @@ export async function updatePurchasedStatus() {
       productIds.push(row.productId);
     });
 
-    console.log("User ID, productId", userIds[0], productIds[0]);
+    // console.log("User ID, productId", userIds[0], productIds[0]);
 
     // get the purchased products for each userId with call to shopify api
     for (let i = 0; i < userIds.length; i++) {
@@ -32,20 +32,20 @@ export async function updatePurchasedStatus() {
         await getCustomerProductPurchases(userId)
       ).json();
 
-      console.log(
-        "Purchased products for user " + userId + " are: ",
-        purchasedProducts
-      );
+      // console.log(
+      //   "Purchased products for user " + userId + " are: ",
+      //   purchasedProducts
+      // );
 
       // attempt to match purchased products of each user with productId in productIds array
       // if match, update purchased status to 1
 
-      console.log(productId + "  " + purchasedProducts.productIds);
+      // console.log(productId + "  " + purchasedProducts.productIds);
       if (
         purchasedProducts.productIds &&
         purchasedProducts.productIds.includes(productId)
       ) {
-        console.log("Match found for user " + userId);
+        // console.log("Match found for user " + userId);
         const [results, buff] = await singleStoreConnection.execute(
           `
               UPDATE Purchases
@@ -80,7 +80,7 @@ export async function updateExistingUsers() {
       emails.push(row.email);
     });
 
-    console.log("User ID, email", userIds[0], emails[0]);
+    // console.log("User ID, email", userIds[0], emails[0]);
 
     // get the purchased products for each userId with call to shopify api
     for (let i = 0; i < userIds.length; i++) {
@@ -103,13 +103,14 @@ export async function updateExistingUsers() {
       );
 
       // update userId in Users, Purchases, and queries/customerSupportQueries tables
+
+      // this row already exists, when the customer is finally registered (has a userId and email)
       const [results, buff] = await singleStoreConnection.execute(
         `
-            UPDATE Users
-            SET userId = ?
-            WHERE email = ?
+        DELETE FROM Users
+        WHERE userId = ? AND email = ?
           `,
-        [shopifyUserId, email]
+        [userId, email]
       );
 
       const [results2, buff2] = await singleStoreConnection.execute(

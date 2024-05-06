@@ -3,8 +3,10 @@ declare module "*.css";
 export type User = {
   userId: number;
   name: string;
-  queries: Query[];
-  reviews: Review[];
+  email?: string;
+  createdAt?: string;
+  queries?: Query[];
+  reviews?: Review[];
 };
 
 export type Review = {
@@ -33,6 +35,25 @@ export type ReviewPrompt = {
   userId: number;
   userName: string;
   questions: string[];
+};
+
+export enum PurchaseStatus {
+  WINDOW, // queried, didn't add to cart
+  ABANDONEDCART, // added to cart, didn't purchase
+  PURCHASED,
+}
+
+export type Segment = {
+  segmentId?: number;
+  purchaseStatus: PurchaseStatus;
+  productId: number;
+  semanticSegmentReview: string;
+  semanticSegmentQuery: string;
+  semanticSegmentCxQuery: string;
+  overReviews: boolean;
+  overQueries: boolean;
+  overCxQueries: boolean;
+  userIds: number[];
 };
 
 // Define custom equality function for ReviewPrompt based on userId

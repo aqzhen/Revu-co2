@@ -45,7 +45,7 @@ export async function call_windowShoppersInsightsLLM(
     );
 
     console.log("in the sell side llm and printing users queries");
-    console.log(userQueries);
+    // console.log(userQueries);
 
     const parsedUserQueries = JSON.parse(userQueries);
 
@@ -77,13 +77,13 @@ export async function call_windowShoppersInsightsLLM(
     // Getting product description
     const productDescription = await getProductDescription(productId);
     const { description } = productDescription;
-    console.log(description);
+    // console.log(description);
 
     if (k && k > 1) {
       // Clustering Logic to get Query Categories
       const categoriesString = getQueryClusters(queryList, k);
 
-      console.log(categoriesString);
+      // console.log(categoriesString);
 
       llmOutput = (
         await llm.invoke(
@@ -272,7 +272,7 @@ export async function call_windowShoppersInsightsLLM(
     const endIndex = llmOutputString.lastIndexOf("]");
     llmOutputString = llmOutputString.substring(startIndex, endIndex + 1);
 
-    console.log(llmOutputString);
+    // console.log(llmOutputString);
 
     const response = JSON.parse(llmOutputString as string);
 
@@ -384,7 +384,7 @@ export async function call_windowShoppersInsightsLLM(
     ).content;
 
     insightsString = insightsString as string;
-    console.log(insightsString);
+    // console.log(insightsString);
     const start = insightsString.indexOf("{");
     const end = insightsString.lastIndexOf("}");
     insightsString = insightsString.substring(start, end + 1);
@@ -452,7 +452,7 @@ export async function call_purchasingCustomersInsightsLLM(
     );
 
     console.log("in the sell side llm and printing users queries");
-    console.log(userQueries);
+    // console.log(userQueries);
 
     const parsedUserQueries = JSON.parse(userQueries);
 
@@ -491,7 +491,7 @@ export async function call_purchasingCustomersInsightsLLM(
     );
 
     console.log("in the sell side llm and printing users reviews");
-    console.log(userReviews);
+    // console.log(userReviews);
     const parsedUserReviews = JSON.parse(userReviews);
     const reviewList: Review[] = parsedUserReviews.map((review: any) => {
       return {
@@ -514,7 +514,7 @@ export async function call_purchasingCustomersInsightsLLM(
       // Clustering Logic to get Query Categories
       const categoriesString = getQueryClusters(queryList, k);
 
-      console.log(categoriesString);
+      // console.log(categoriesString);
 
       llmOutput = (
         await llm.invoke(
@@ -742,7 +742,7 @@ export async function call_purchasingCustomersInsightsLLM(
       }
     );
 
-    console.log(categories);
+    // console.log(categories);
 
     const userWideInsights = (
       await llm.invoke(
@@ -763,7 +763,7 @@ export async function call_purchasingCustomersInsightsLLM(
       )
     ).content;
 
-    console.log(userWideInsights);
+    // console.log(userWideInsights);
 
     return {
       categories: response,

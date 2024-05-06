@@ -1,5 +1,5 @@
 import { RowDataPacket } from "mysql2/promise";
-import { Query, Review, User } from "../../globals";
+import { Query, Review, Segment, User } from "../../globals";
 import { Chunk } from "../langchain/chunking";
 import { generateTableData } from "./misc";
 
@@ -220,4 +220,54 @@ export async function getCxQueries() {
   }
 
   return { queries };
+}
+
+export async function getUserProfileDetails(userId: number) {
+  const [response, bufff] = await singleStoreConnection.execute(
+    `
+        SELECT userId, firstName, lastName, email, accountCreated
+        FROM Users
+        WHERE userId = ${userId}
+      `
+  );
+
+  console.log(userId);
+  const row = response[0] as RowDataPacket;
+  if (!row) {
+    return null;
+  }
+  const user: User = {
+    userId: row.userId,
+    name: row.firstName + " " + row.lastName,
+    email: row.email,
+    createdAt: row.accountCreated,
+  };
+
+  return { user: user };
+}
+
+export async function getSegments() {
+  const [response, bufff] = await singleStoreConnection.execute(
+    `
+        SELECT * FROM Segments
+      `
+  );
+  const segments: Segment[] = [];
+  for (const row of response as RowDataPacket[]) {
+    const segment: Segment = {
+      segmentId: row.segmentId,
+      purchaseStatus: row.purchaseStatus,
+      productId: row.productId,
+      semanticSegmentReview: row.semanticSegmentReview,
+      semanticSegmentQuery: row.semanticSegmentQuery,
+      semanticSegmentCxQuery: row.semanticSegmentCxQuery,
+      overReviews: row.overReviews,
+      overQueries: row.overQueries,
+      overCxQueries: row.overCxQueries,
+      userIds: row.userIds,
+    };
+    segments.push(segment);
+  }
+
+  return segments;
 }

@@ -210,7 +210,44 @@ export async function createUsersTable(deleteExisting: boolean) {
             `);
     console.log("Users table created successfully.");
   } catch (err) {
+    console.log(err);
     console.log("Users table already exists");
+  }
+}
+
+export async function createSegmentsTable(deleteExisting: boolean) {
+  try {
+    if (deleteExisting) {
+      console.log("Dropping segments table");
+
+      await singleStoreConnection.execute("DROP TABLE IF EXISTS Segments");
+    }
+    await singleStoreConnection.execute(`
+                CREATE TABLE Segments (
+                    segmentId BIGINT AUTO_INCREMENT PRIMARY KEY,
+                    purchaseStatus TEXT,
+                    productId BIGINT,
+                    semanticSegmentReview TEXT,
+                    semanticSegmentQuery TEXT,
+                    semanticSegmentCxQuery TEXT,
+                    overReviews BOOL,
+                    overQueries BOOL,
+                    overCxQueries BOOL,
+                    userIds TEXT -- JSON array of userIds
+                )
+            `);
+    console.log("Segments table created successfully.");
+  } catch (err) {
+    console.log("Segments table already exists");
+  }
+}
+
+export async function deleteSellerQueriesTable() {
+  try {
+    await singleStoreConnection.execute("DROP TABLE IF EXISTS Seller_Queries");
+    console.log("Deleted Seller_Queries table successfully.");
+  } catch (err) {
+    console.log("Seller_Queries table does not exist.");
   }
 }
 
@@ -221,7 +258,9 @@ export async function createAllTables(deleteExisting: boolean) {
   createPurchasesTable(deleteExisting);
   createQueriesTable(deleteExisting);
   createReviewTable(deleteExisting);
-  createSellerQueriesTable(deleteExisting);
+  // createSellerQueriesTable(deleteExisting);
+  deleteSellerQueriesTable();
   createProductsTable(deleteExisting);
   createUsersTable(deleteExisting);
+  createSegmentsTable(deleteExisting);
 }

@@ -151,6 +151,9 @@ export async function getExistingCustomers() {
           node {
             id
             email
+            firstName
+            lastName
+            createdAt
           }
         }
       }

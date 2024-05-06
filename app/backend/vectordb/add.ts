@@ -8,6 +8,7 @@ import {
 import { chunk_string } from "../langchain/chunking";
 import { generateEmbedding } from "./misc";
 import { HashFormat } from "@shopify/shopify-api/runtime";
+import { Segment } from "../../globals";
 
 // Adders
 export async function insertProduct(
@@ -33,7 +34,7 @@ export async function insertProduct(
     `
     );
     console.log("Product added successfully.");
-    console.log(productId, title, description);
+    // console.log(productId, title, description);
   } catch (err) {
     console.error("ERROR", err);
     process.exit(1);
@@ -424,17 +425,67 @@ export async function addExistingUsers() {
   const existingCustomers = await getExistingCustomers();
   const users = existingCustomers.customers;
 
-  users.map(async (user: any) => {
-    await singleStoreConnection.execute(
-      `
+  try {
+    users.map(async (user: any) => {
+      await singleStoreConnection.execute(
+        `
         INSERT IGNORE INTO Users (
             userId,
-            email
+            firstName,
+            lastName,
+            email,
+            accountCreated
         ) VALUES (
             ${user.node.id.replace("gid://shopify/Customer/", "")},
-            '${user.node.email}'
+            '${user.node.firstName}',
+            '${user.node.lastName}',
+            '${user.node.email}',
+            '${user.node.createdAt}'
         )
         `
+      );
+    });
+  } catch (err) {
+    console.error("ERROR", err);
+  }
+}
+
+export async function addSegment(segment: Segment) {
+  if (!segment) {
+    console.error("Segment is empty");
+    return;
+  }
+  try {
+    await singleStoreConnection.execute(
+      `
+      INSERT IGNORE INTO Segments (
+          purchaseStatus,
+          productId,
+          semanticSegmentReview,
+          semanticSegmentQuery,
+          semanticSegmentCxQuery,
+          overReviews,
+          overQueries,
+          overCxQueries,
+          userIds
+      ) VALUES (
+          ${!segment.purchaseStatus ? -1 : segment.purchaseStatus},
+          ${segment.productId},
+          '${segment.semanticSegmentReview}',
+          '${segment.semanticSegmentQuery}',
+          '${segment.semanticSegmentCxQuery}',
+          '${segment.overReviews}',
+          '${segment.overQueries}',
+          '${segment.overCxQueries}',
+          '[${segment.userIds.toString()}]'
+      )
+      `
     );
-  });
+
+    console.log("Segment added successfully.");
+    return { status: 1 };
+  } catch (err) {
+    console.error("ERROR", err);
+    return { status: 0 };
+  }
 }

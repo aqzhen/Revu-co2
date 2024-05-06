@@ -74,6 +74,7 @@ export async function initializeDBconnections() {
       ssl: {
         ca: fs.readFileSync("./singlestore_bundle.pem"),
       },
+      multipleStatements: true,
     });
     console.log("You have successfully connected to SingleStore.");
     global.singleStoreConnection = singleStoreConnection;
@@ -93,6 +94,7 @@ export async function initializeDBconnections() {
     ssl: {
       ca: fs.readFileSync("./singlestore_bundle.pem"),
     },
+    multipleStatements: true,
   });
 
   global.langchain_db = await SqlDatabase.fromDataSourceParams({
