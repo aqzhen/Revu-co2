@@ -11,7 +11,7 @@ export async function call_reviewPromptLLM(userId: string): Promise<string[]> {
 
   try {
     console.log("Generating review prompt for user id: ?", userId);
-    const userQueries = await langchain_db.run(
+    const userQueries = await singleStoreConnection.execute(
       `SELECT queryId, query FROM Queries WHERE userId = ${userId}`
     );
 

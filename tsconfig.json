@@ -21,6 +21,8 @@
     "moduleResolution": "Bundler",
     "target": "ES2022",
     "baseUrl": ".",
+    // "module": "commonjs",
+    "esModuleInterop": true,
     "paths": {
       "~/*": ["./app/*"]
     },

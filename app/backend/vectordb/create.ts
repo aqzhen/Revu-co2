@@ -1,3 +1,14 @@
+// // Create unique DB
+// export async function createDB() {
+//   try {
+//     await singleStoreConnection.execute("CREATE DATABASE IF NOT EXISTS test");
+//     console.log("Database created successfully.");
+//     process.env.SINGLESTORE_DATABASE = "test";
+//   } catch (err) {
+//     console.log("Database already exists");
+//   }
+// }
+
 // Create Tables
 export async function createReviewTable(deleteExisting: boolean) {
   try {
@@ -236,7 +247,6 @@ export async function createUsersTable(deleteExisting: boolean) {
             `);
     console.log("Users table created successfully.");
   } catch (err) {
-    console.log(err);
     console.log("Users table already exists");
   }
 }
@@ -268,15 +278,82 @@ export async function createSegmentsTable(deleteExisting: boolean) {
   }
 }
 
+export async function createSupportTicketsTable(deleteExisting: boolean) {
+  try {
+    if (deleteExisting) {
+      console.log("Dropping support tickets table");
+
+      await singleStoreConnection.execute(
+        "DROP TABLE IF EXISTS Customer_Support_Tickets"
+      );
+    }
+    // TODO: token cannot be unique if its not shard key in singlestore
+    await singleStoreConnection.execute(`
+                CREATE TABLE Customer_Support_Tickets (
+                    ticketId BIGINT AUTO_INCREMENT PRIMARY KEY,
+                    customerId BIGINT,
+                    productId BIGINT,
+                    email TEXT,
+                    query TEXT,
+                    status ENUM('open', 'closed') DEFAULT 'open',
+                    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    token VARCHAR(64) NOT NULL, 
+                    tokenExpiration TIMESTAMP NOT NULL
+                )
+            `);
+    console.log("Support Tickets table created successfully.");
+  } catch (err) {
+    console.log(err);
+    console.log("Support Tickets table already exists");
+  }
+}
+
+export async function createSupportTicketsChatsTable(deleteExisting: boolean) {
+  try {
+    if (deleteExisting) {
+      console.log("Dropping support tickets chats table");
+
+      await singleStoreConnection.execute(
+        "DROP TABLE IF EXISTS Customer_Support_Tickets_Chats"
+      );
+    }
+    await singleStoreConnection.execute(`
+                CREATE TABLE Customer_Support_Tickets_Chats (
+                    chatId BIGINT AUTO_INCREMENT PRIMARY KEY,
+                    ticketId BIGINT,
+                    userId BIGINT,
+                    email TEXT,
+                    message TEXT,
+                    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
+    console.log("Support Tickets Chats table created successfully.");
+  } catch (err) {
+    console.log("Support Tickets Chats table already exists");
+  }
+}
+
+export async function deleteTable(tableName: string) {
+  try {
+    await singleStoreConnection.execute(`DROP TABLE IF EXISTS ${tableName}`);
+    console.log(`${tableName} table dropped successfully.`);
+  } catch (err) {
+    console.log(`${tableName} table does not exist.`);
+  }
+}
+
 export async function createAllTables(deleteExisting: boolean) {
-  createCustomerSupportCorpusTable(deleteExisting);
+  // createCustomerSupportCorpusTable(deleteExisting);
   createCustomerSupportQueriesTable(deleteExisting);
   createEmbeddingsTable(deleteExisting);
-  createPurchasesTable(deleteExisting);
+  // createPurchasesTable(deleteExisting);
   createQueriesTable(deleteExisting);
   createReviewTable(deleteExisting);
-  createProductsTable(deleteExisting);
+  // createProductsTable(deleteExisting);
   createUsersTable(deleteExisting);
   createSegmentsTable(deleteExisting);
   createProductEmbeddingsTable(deleteExisting);
+  // deleteTable("Customer_Support_Tickets");
+  createSupportTicketsTable(deleteExisting);
+  createSupportTicketsChatsTable(deleteExisting);
 }

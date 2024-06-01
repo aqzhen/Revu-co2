@@ -8,6 +8,7 @@ import {
 import { chunk_string } from "../langchain/chunking";
 import { generateEmbedding } from "./misc";
 import { Segment } from "../../globals";
+import crypto from "crypto";
 
 // Adders
 export async function insertProduct(
@@ -347,21 +348,21 @@ export async function addCustomerSupportQueryToSinglestore(
         `
     );
 
-    await singleStoreConnection.execute(
-      `
-        INSERT IGNORE INTO Purchases (
-            userId,
-            productId,
-            purchased,
-            quantity
-        ) VALUES (
-            ${userId},
-            ${productId},
-            0,
-            0
-        )
-        `
-    );
+    // await singleStoreConnection.execute(
+    //   `
+    //     INSERT IGNORE INTO Purchases (
+    //         userId,
+    //         productId,
+    //         purchased,
+    //         quantity
+    //     ) VALUES (
+    //         ${userId},
+    //         ${productId},
+    //         0,
+    //         0
+    //     )
+    //     `
+    // );
 
     const [results, buff] = await singleStoreConnection.execute(
       `
@@ -539,5 +540,90 @@ export async function addSegment(segment: Segment) {
   } catch (err) {
     console.error("ERROR", err);
     return { status: 0 };
+  }
+}
+
+export async function addSupportTicket(
+  customerId: number,
+  productId: number,
+  email: string,
+  query: string
+) {
+  try {
+    const token = crypto.randomBytes(32).toString("hex");
+    const tokenExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 19)
+      .replace("T", " ");
+    const [results] = await singleStoreConnection.execute(
+      `
+      INSERT IGNORE INTO Customer_Support_Tickets (
+        customerId,
+        productId,
+        email,
+        query,
+        token,
+        tokenExpiration
+      ) VALUES (
+        ${customerId},
+        ${productId},
+        '${email}',
+        '${query}',
+        '${token}',
+        '${tokenExpiration}'
+      )
+      `
+    );
+
+    let ticketId;
+    if ((results as any).affectedRows > 0) {
+      ticketId = (results as any).insertId;
+    }
+    await singleStoreConnection.execute(
+      `
+      INSERT IGNORE INTO Customer_Support_Tickets_Chats (
+          ticketId,
+          userId,
+          email,
+          message
+      ) VALUES (
+          ${ticketId},
+          ${customerId},
+          '${email}',
+          '${query}'
+      )
+      `
+    );
+    console.log("Support Ticket added successfully.");
+  } catch (err) {
+    console.error("ERROR", err);
+  }
+}
+
+export async function addSupportTicketChat(
+  ticketId: number,
+  userId: number,
+  email: string,
+  message: string
+) {
+  try {
+    await singleStoreConnection.execute(
+      `
+      INSERT IGNORE INTO Customer_Support_Tickets_Chats (
+          ticketId,
+          userId,
+          email,
+          message
+      ) VALUES (
+          ${ticketId},
+          ${userId},
+          '${email}',
+          '${message}'
+      )
+      `
+    );
+    console.log("Support Ticket Chat added successfully.");
+  } catch (err) {
+    console.error("ERROR", err);
   }
 }

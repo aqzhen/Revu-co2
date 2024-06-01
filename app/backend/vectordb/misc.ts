@@ -14,7 +14,7 @@ export function generateTableData(user: User): any[][] {
   const productIdToReviewIdsMap: { [key: number]: number[] } = {}; // Map to store reviewIds by productId
 
   // Process queries for the user
-  user.queries.forEach((query) => {
+  user?.queries?.forEach((query) => {
     const { productId, queryId } = query;
     productIdSet.add(productId!); // Add productId to the set of productIds for this user
 
@@ -25,7 +25,7 @@ export function generateTableData(user: User): any[][] {
   });
 
   // Process reviews for the user
-  user.reviews.forEach((review) => {
+  user?.reviews?.forEach((review) => {
     const { productId, reviewId } = review;
     productIdSet.add(productId); // Add productId to the set of productIds for this user
 
@@ -68,7 +68,7 @@ export async function initializeDBconnections() {
     let singleStoreConnection = await mysql.createConnection({
       host: process.env.SINGLESTORE_HOST,
       user: process.env.SINGLESTORE_USER,
-      port: 3333,
+      port: process.env.SINGLESTORE_PORT as unknown as number,
       password: process.env.SINGLESTORE_PASSWORD,
       database: process.env.SINGLESTORE_DATABASE,
       ssl: {
@@ -83,24 +83,24 @@ export async function initializeDBconnections() {
     process.exit(1);
   }
 
-  console.log("Connecting to dbs to langchain");
-  global.dataSource = new DataSource({
-    type: "mysql",
-    host: process.env.SINGLESTORE_HOST,
-    port: 3333,
-    username: process.env.SINGLESTORE_USER,
-    password: process.env.SINGLESTORE_PASSWORD,
-    database: process.env.SINGLESTORE_DATABASE,
-    ssl: {
-      ca: fs.readFileSync("./singlestore_bundle.pem"),
-    },
-    multipleStatements: true,
-  });
+  // console.log("Connecting to dbs to langchain");
+  // global.dataSource = new DataSource({
+  //   type: "mysql",
+  //   host: process.env.SINGLESTORE_HOST,
+  //   port: 3333,
+  //   username: process.env.SINGLESTORE_USER,
+  //   password: process.env.SINGLESTORE_PASSWORD,
+  //   database: process.env.SINGLESTORE_DATABASE,
+  //   ssl: {
+  //     ca: fs.readFileSync("./singlestore_bundle.pem"),
+  //   },
+  //   multipleStatements: true,
+  // });
 
-  global.langchain_db = await SqlDatabase.fromDataSourceParams({
-    appDataSource: dataSource,
-  });
+  // global.langchain_db = await SqlDatabase.fromDataSourceParams({
+  //   appDataSource: dataSource,
+  // });
 
-  global.toolkit = new SqlToolkit(global.langchain_db);
-  global.tools = toolkit.getTools();
+  // global.toolkit = new SqlToolkit(global.langchain_db);
+  // global.tools = toolkit.getTools();
 }

@@ -258,7 +258,9 @@
                         htmlString = openTicketHTML + htmlString;
                     }
                     signals.onResponse({text: responseData.text, html: responseData.html + htmlString }); // displays the response text message
-                  
+
+                    searchType = "";
+        
                 } catch (e) {
                     signals.onResponse({error: 'Error'}); // displays an error message
                 }

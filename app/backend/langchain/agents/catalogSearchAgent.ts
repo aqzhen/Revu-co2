@@ -45,7 +45,7 @@ export async function callCatalogSearchAgent(
 
     // Catalog Level Search
     if (productId == -1) {
-      allReviews = await langchain_db.run(
+      allReviews = await singleStoreConnection.execute(
         `SELECT R.productId, R.reviewId, E.chunkNumber, E.body, DOT_PRODUCT(E.chunkEmbedding, Query.semanticEmbedding) AS similarity_score
           FROM Review R CROSS JOIN (SELECT semanticEmbedding FROM Queries WHERE queryId = ${queryId}) AS Query 
           JOIN Embeddings E ON R.reviewId = E.reviewId
@@ -53,7 +53,7 @@ export async function callCatalogSearchAgent(
           LIMIT 10;
           `
       );
-      productData = await langchain_db.run(
+      productData = await singleStoreConnection.execute(
         `SELECT P.productId, PE.body, PE.chunkNumber, DOT_PRODUCT(PE.chunkEmbedding, Query.semanticEmbedding) AS similarity_score 
           FROM ProductEmbeddings PE
           JOIN Products P ON PE.productId = P.productId CROSS JOIN (SELECT semanticEmbedding FROM Queries WHERE queryId = ${queryId}) AS Query
@@ -61,9 +61,9 @@ export async function callCatalogSearchAgent(
           LIMIT 10;`
       );
     }
-    // Product Level Search 
+    // Product Level Search
     else {
-      allReviews = await langchain_db.run(
+      allReviews = await singleStoreConnection.execute(
         `SELECT R.productId, R.reviewId, E.chunkNumber, E.body, DOT_PRODUCT(E.chunkEmbedding, Query.semanticEmbedding) AS similarity_score
           FROM Review R CROSS JOIN (SELECT semanticEmbedding FROM Queries WHERE queryId = ${queryId}) AS Query 
           JOIN Embeddings E ON R.reviewId = E.reviewId
@@ -72,7 +72,7 @@ export async function callCatalogSearchAgent(
           LIMIT 10;
           `
       );
-      productData = await langchain_db.run(
+      productData = await singleStoreConnection.execute(
         `SELECT P.productId, PE.body, PE.chunkNumber, DOT_PRODUCT(PE.chunkEmbedding, Query.semanticEmbedding) AS similarity_score 
           FROM ProductEmbeddings PE 
           JOIN Products P ON PE.productId = P.productId CROSS JOIN (SELECT semanticEmbedding FROM Queries WHERE queryId = ${queryId}) AS Query
@@ -82,12 +82,12 @@ export async function callCatalogSearchAgent(
       );
     }
 
-    let filteredReviews = JSON.parse(allReviews).filter(
+    let filteredReviews = allReviews[0].filter(
       (r: any) => r.similarity_score > 0.45
     );
 
     // console.log(JSON.parse(productData));
-    let filteredPdData = JSON.parse(productData).filter(
+    let filteredPdData = productData[0].filter(
       (pd: any) => pd.similarity_score > 0.3
     );
 
@@ -96,18 +96,19 @@ export async function callCatalogSearchAgent(
       "Reviews Search Agent Results:" + filteredReviews.length + "\n"
     );
 
-    let productInfoMap = new Map<number, any>();    
+    let productInfoMap = new Map<number, any>();
     filteredPdData.forEach((pd: any) => {
-      let {productId, body, chunkNumber, similarity_score} = pd;
+      let { productId, body, chunkNumber, similarity_score } = pd;
       if (!productInfoMap.has(productId)) {
         productInfoMap.set(productId, {
-          productDescriptionResults: 
-          [{
-            productId: productId,
-            body: body,
-            similarity_score: similarity_score,
-          }],
-          reviewsResults: []
+          productDescriptionResults: [
+            {
+              productId: productId,
+              body: body,
+              similarity_score: similarity_score,
+            },
+          ],
+          reviewsResults: [],
         });
       } else {
         productInfoMap.get(productId).productDescriptionResults.push({
@@ -117,20 +118,21 @@ export async function callCatalogSearchAgent(
         });
       }
     });
-    
+
     filteredReviews.forEach((r: any) => {
-      let {productId, reviewId, body, chunkNumber, similarity_score} = r;
+      let { productId, reviewId, body, chunkNumber, similarity_score } = r;
       if (!productInfoMap.has(productId)) {
         productInfoMap.set(productId, {
           productDescriptionResults: [],
-          reviewsResults: 
-          [{
-            productId: productId,
-            reviewId: reviewId,
-            body: body,
-            chunkNumber: chunkNumber,
-            similarity_score: similarity_score,
-          }]
+          reviewsResults: [
+            {
+              productId: productId,
+              reviewId: reviewId,
+              body: body,
+              chunkNumber: chunkNumber,
+              similarity_score: similarity_score,
+            },
+          ],
         });
       } else {
         productInfoMap.get(productId).reviewsResults.push({
@@ -162,11 +164,12 @@ export async function callCatalogSearchAgent(
     //   }
     // }
 
-    const productButtonsAndDetailsHTML = generateProductButtonsAndDetails(productInfoMap);
+    const productButtonsAndDetailsHTML =
+      generateProductButtonsAndDetails(productInfoMap);
     console.log(productButtonsAndDetailsHTML);
 
-// // Return the concatenated HTML string
-    return {htmlString: productButtonsAndDetailsHTML};
+    // // Return the concatenated HTML string
+    return { htmlString: productButtonsAndDetailsHTML };
 
     return {
       productDescriptionOutput: filteredPdData,
@@ -180,7 +183,7 @@ export async function callCatalogSearchAgent(
 
 function generateProductButtonsAndDetails(productInfoMap: Map<number, any>) {
   let htmlString = ""; // Initialize an empty string to store the HTML
-  
+
   for (let [productId, productInfo] of productInfoMap.entries()) {
     // Generate button for the product ID
     // htmlString += `<button id=product-button-${productId} `;
@@ -188,44 +191,55 @@ function generateProductButtonsAndDetails(productInfoMap: Map<number, any>) {
     // // htmlString += `onmouseleave=hideProductDetails(${productId})>`;
     // htmlString += `onclick=document.getElementById('product-${productId}').style.display='block';>`;
     // htmlString += `Product ID: ${productId}</button>`;
-    
+
     // Generate and append product details HTML
     htmlString += generateProductDetails(productId, productInfo);
   }
   // htmlString = htmlString.replace(/(\r\n|\n|\r)/gm, "");
-  
+
   return htmlString; // Return the concatenated HTML string
 }
 
-function generateProductDetails(productId: number, productInfo: { productDescriptionResults: any[]; reviewsResults: any[]; }) {
+function generateProductDetails(
+  productId: number,
+  productInfo: { productDescriptionResults: any[]; reviewsResults: any[] }
+) {
   let detailsHTML = `<div id=product-${productId} style=${`display: none;`}> `;
   detailsHTML += `<h3>Product ID: ${productId}</h3>`;
   detailsHTML += `<h4>Product Description:</h4>`;
-  
+
   if (productInfo.productDescriptionResults.length === 0) {
     detailsHTML += `<p><em>No relevant product description results found.</em></p>`;
   }
   // Add product description results
-  productInfo.productDescriptionResults.forEach((description: { body: any; similarity_score: any; }) => {
-    detailsHTML += `<p><em>${description.body}</em></p>`;
-    // detailsHTML += `<p>Similarity Score: ${description.similarity_score}</p>`;
-  });
-  
+  productInfo.productDescriptionResults.forEach(
+    (description: { body: any; similarity_score: any }) => {
+      detailsHTML += `<p><em>${description.body}</em></p>`;
+      // detailsHTML += `<p>Similarity Score: ${description.similarity_score}</p>`;
+    }
+  );
+
   detailsHTML += `<h4>Reviews:</h4>`;
-  
+
   if (productInfo.reviewsResults.length === 0) {
     detailsHTML += `<p><em>No relevant reviews found.</em></p>`;
   }
   // Add reviews results
-  productInfo.reviewsResults.forEach((review: { reviewId: any; body: any; chunkNumber: any; similarity_score: any; }) => {
-    detailsHTML += `<p>Review ID: ${review.reviewId}</p>`;
-    detailsHTML += `<p><em>${review.body}</em></p>`;
-    // detailsHTML += `<p>Chunk Number: ${review.chunkNumber}</p>`;
-    // detailsHTML += `<p>Similarity Score: ${review.similarity_score}</p>`;
-  });
-  
+  productInfo.reviewsResults.forEach(
+    (review: {
+      reviewId: any;
+      body: any;
+      chunkNumber: any;
+      similarity_score: any;
+    }) => {
+      detailsHTML += `<p>Review ID: ${review.reviewId}</p>`;
+      detailsHTML += `<p><em>${review.body}</em></p>`;
+      // detailsHTML += `<p>Chunk Number: ${review.chunkNumber}</p>`;
+      // detailsHTML += `<p>Similarity Score: ${review.similarity_score}</p>`;
+    }
+  );
+
   detailsHTML += `</div>`;
-  
+
   return detailsHTML;
 }
-

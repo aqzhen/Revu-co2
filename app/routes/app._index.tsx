@@ -27,6 +27,9 @@ import { Chunk } from "../backend/langchain/chunking";
 import { Category, Query, Review, ReviewPrompt, User } from "../globals";
 import { Workflows } from "~/frontend/components/Workflows";
 import EmailSender from "~/frontend/components/emailSender";
+import { CX } from "~/frontend/components/CX";
+import { Users } from "~/frontend/components/Users";
+import Pulse from "~/frontend/components/Pulse";
 
 // trigger action to get reviews
 const initializeReviews = async (
@@ -92,9 +95,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
   global.admin = admin;
 
+  // await createDB();
   await initializeDBconnections();
   await createAllTables(false);
-  await updatePurchasedStatus();
+  // await updatePurchasedStatus();
 
   // TODO: TEST THESE
   await addExistingUsers();
@@ -121,13 +125,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {};
 
-// TODO: edit this function to highlight chunks within reviews
-function chunksToReviews(chunks: Chunk[]) {
-  return chunks.map((chunk: Chunk, index: number) => (
-    <Card key={index}>{chunks[index] && <p>{chunks[index].chunkBody}</p>}</Card>
-  ));
-}
-
 export default function Index() {
   // Loader Data
   const loaderData = useLoaderData<typeof loader>();
@@ -145,49 +142,13 @@ export default function Index() {
     loaderData.allUsersData
   );
 
-  // Reviews
-  var [reviewListDetails, setReviewListDetails] = useState<Review[]>([]); // used to store the entire list of reviews for a product
-  // var [chunkBodies, setChunkBodies] = useState<string[]>([]); // used to store the list of reviews returned on a query
-
-  // Queries
-  var [queriesListDetails, setQueriesListDetails] = useState<Query[]>([]); // used to store the entire list of queries for a product
-
-  // CX Queries
+  // CXQueries
   var [cxQueriesListDetails, setcxQueriesListDetails] = useState<Query[]>([]); // used to store the entire list of queries for a product
-  const [cxQueriesCheckbox, setcxQueriesCheckbox] = useState<
-    Map<number, boolean>
-  >(new Map());
-  var [automatedAnswer, setAutomatedAnswer] = useState<string>(""); // used to store the entire list of queries for a product
-
-  // Followups
-  var [reviewPromptData, setReviewPromptData] = useState<any[]>([]);
-  var [reviewPromptDataTest, setReviewPromptDataTest] = useState<
-    ReviewPrompt[]
-  >([]);
-  var [sentStatus, setSentStatus] = useState<boolean[]>([]);
-  var [categorySentStatus, setCategorySentStatus] = useState<boolean[]>([]);
-  // var [editedQuestions, setEditedQuestions] = useState<string[][]>([]);
-
-  // Sellside Insights - Window Shoppers
-  var [windowCategories, setWindowCategories] = useState<Category[]>([]);
-  var [windowInsights, setWindowInsights] = useState<string>("");
-  var [windowSuggestions, setWindowSuggestions] = useState<string[]>([]);
-  var [windowKeywords, setWindowKeywords] = useState<string>("");
-
-  // Sellside Insights - Purchasing Customers
-  var [purchasingCustomersInsights, setPurchasingCustomersInsights] =
-    useState<string>("");
-  var [purchasingCustomersCategories, setPurchasingCustomersCategories] =
-    useState<Category[]>([]);
 
   const handleTabChange = useCallback(
     (selectedTabIndex: number) => setSelectedTab(selectedTabIndex),
     []
   );
-
-  // FAQ Documents
-  var [faqString, setFaqString] = useState<string>("");
-  var [faqStrings, setFaqStrings] = useState<string[]>([]);
 
   const tabs = [
     {
@@ -216,81 +177,12 @@ export default function Index() {
       content: "Users",
       panelId: "users-content-1",
     },
-    {
-      id: "followups-1",
-      content: "Followups",
-      panelID: "followups-content-1",
-    },
   ];
-
-  // calling api to get reviews for returned reviews/chunks after a query
-  const reviewIds: number[] = [];
-  const chunkNumbers: number[] = [];
-  const queryIds: number[] = [];
-
-  const initializeQueries = async (selectedProductId: Number) => {
-    const requestData = {
-      productId: selectedProductId,
-    };
-    try {
-      const response = await fetch("/queries/fetchAll", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
-      });
-
-      const data = await response.json();
-
-      // Handle the response from the API
-      setQueriesListDetails(data.queries);
-    } catch (error) {
-      // Handle any errors
-      console.error(error);
-    }
-  };
-
-  const initializeUsers = async () => {
-    const requestData = {};
-    try {
-      console.log("Fetching users");
-      const response = await fetch(`/queries/fetchAll`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
-      });
-
-      const data = await response.json();
-
-      // Handle the response from the API
-
-      return null;
-    } catch (error) {
-      // Handle any errors
-      console.error(error);
-    }
-  };
 
   const handleRangeSliderChange = useCallback(
     (value: number) => setsliderRangeValue(value),
     []
   );
-  const handleQuestionChange = (
-    reviewIndex: number,
-    questionIndex: number,
-    newValue: string
-  ) => {
-    const updatedQuestions = [...reviewPromptDataTest];
-    updatedQuestions[reviewIndex].questions[questionIndex] = newValue;
-    setReviewPromptDataTest(updatedQuestions);
-  };
-
-  const handleSend = (reviewIndex: number) => {
-    sentStatus[reviewIndex] = !sentStatus[reviewIndex];
-  };
 
   useEffect(() => {
     if (loaderData?.productData?.products?.length > 0) {
@@ -311,11 +203,6 @@ export default function Index() {
   const handleProductSelection = async (productId: string) => {
     var trimmed_id = productId.replace("gid://shopify/Product/", "");
     setSelectedProduct(Number(trimmed_id));
-    initializeQueries(Number(trimmed_id));
-    // console.log(loaderData.reviewsHashmap);
-    const reviews = loaderData?.reviewsHashmap ?? {};
-    setReviewListDetails(reviews[Number(trimmed_id)]);
-    // console.log(reviews[Number(trimmed_id)]);
   };
 
   return (
@@ -346,13 +233,6 @@ export default function Index() {
         <div style={{ flex: "1 1 80%" }}>
           <Tabs tabs={tabs} selected={selectedTab} onSelect={handleTabChange}>
             <Card>
-              <p>Selected Product ID: {selectedProduct}</p>
-              {selectedProduct ? null : (
-                <p style={{ color: "red" }}>Please select a product</p>
-              )}
-            </Card>
-
-            <Card>
               {selectedTab === 0 && (
                 <>
                   <RangeSlider
@@ -363,134 +243,10 @@ export default function Index() {
                     onChange={handleRangeSliderChange}
                     output
                   />
-                  <Button
-                    onClick={async () => {
-                      try {
-                        const requestData = {
-                          productId: selectedProduct,
-                          selector: "windowShoppers",
-                          k: sliderRangeValue,
-                        };
-
-                        const response = await fetch(
-                          "/agent/sellSideInsights",
-                          {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify(requestData),
-                          }
-                        );
-                        const data = await response.json();
-                        const {
-                          categories,
-                          userWideInsights,
-                          userWideSuggestions,
-                          keywords,
-                        } = data;
-                        setWindowCategories(categories);
-                        setWindowInsights(userWideInsights);
-                        setWindowSuggestions(userWideSuggestions);
-                        setWindowKeywords(keywords);
-                      } catch (error) {
-                        // Handle any errors
-                        console.error(error);
-                      }
-                    }}
-                  >
-                    Get Insights
-                  </Button>
-                  {windowInsights && (
-                    <>
-                      <div>
-                        <br />
-                        <h1
-                          style={{
-                            fontFamily: "Arial, sans-serif",
-                            color: "#0077b6",
-                            fontSize: 20,
-                          }}
-                        >
-                          <strong>User-Wide Insights</strong>
-                        </h1>
-                        <p> {windowInsights} </p>
-                        <br />
-                        {windowSuggestions && (
-                          <>
-                            <h1
-                              style={{
-                                fontFamily: "Arial, sans-serif",
-                                color: "red",
-                                fontSize: 16,
-                              }}
-                            >
-                              <strong>Action Items</strong>
-                            </h1>
-                            {windowSuggestions.map((suggestion, index) => (
-                              <div key={index}>
-                                <p>{suggestion}</p>
-                              </div>
-                            ))}
-                            <br />
-                            <p>
-                              <strong
-                                style={{ color: "green", fontWeight: "bold" }}
-                              >
-                                Keywords:{" "}
-                              </strong>{" "}
-                              {windowKeywords}
-                            </p>
-                          </>
-                        )}
-                      </div>
-                      <br />
-                    </>
-                  )}
-                  {windowCategories &&
-                    windowCategories.map((category) => (
-                      <Card>
-                        {
-                          <div key={category.category}>
-                            <h1
-                              style={{
-                                fontFamily: "Arial, sans-serif",
-                                color: "#0077b6",
-                                fontSize: 16,
-                              }}
-                            >
-                              <strong>Category:</strong> {category.category}{" "}
-                            </h1>
-                            <br />
-                            <p>
-                              {" "}
-                              <strong>Summary:</strong> {category.summary}{" "}
-                            </p>
-                            <br />
-                            <p>
-                              {" "}
-                              <strong>Suggestions:</strong>{" "}
-                              {category.suggestions}
-                            </p>
-                            <br />
-                            <details>
-                              <summary> See Relevant Queries </summary>
-                              {category.queries.map((query) => (
-                                <div key={query.queryId}>
-                                  <p>
-                                    {" "}
-                                    <strong>Query: </strong> {query.query}{" "}
-                                    (Query ID: {query.queryId}, User ID:{" "}
-                                    {query.userId})
-                                  </p>
-                                </div>
-                              ))}
-                            </details>
-                            <br />
-                          </div>
-                        }
-                      </Card>
-                    ))}
+                  <Pulse
+                    selectedProduct={selectedProduct as number}
+                    sliderRangeValue={sliderRangeValue}
+                  ></Pulse>
                 </>
               )}
 
@@ -503,207 +259,31 @@ export default function Index() {
               {selectedTab === 2 && (
                 <>
                   <Workflows></Workflows>
-                  <EmailSender></EmailSender>
                 </>
               )}
 
               {selectedTab === 3 && (
                 <>
-                  <input
-                    type="text"
-                    placeholder="Enter Automated Answer"
-                    onChange={(e) => setAutomatedAnswer(e.target.value)}
+                  <p>Selected Product ID: {selectedProduct}</p>
+                  {selectedProduct ? null : (
+                    <p style={{ color: "red" }}>Please select a product</p>
+                  )}
+                  <Button onClick={() => handleProductSelection("-1")}>
+                    View All Products
+                  </Button>
+                  <CX
+                    cxQueriesList={cxQueriesListDetails}
+                    productId={selectedProduct as number}
                   />
-                  <Button
-                    onClick={async () => {
-                      try {
-                        let supportQueryIds = [];
-                        for (let key of cxQueriesCheckbox.keys()) {
-                          if (cxQueriesCheckbox.get(key)) {
-                            supportQueryIds.push(key);
-                          }
-                        }
-                        const requestData = {
-                          queryIds: supportQueryIds,
-                          answer: automatedAnswer,
-                        };
-                        console.log(
-                          "Automating answer for queries: ",
-                          requestData
-                        );
-                        const response = await fetch(
-                          "/supportQueries/automateAnswer",
-                          {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify(requestData),
-                          }
-                        );
-
-                        const data = await response.json();
-                      } catch (error) {
-                        // Handle any errors
-                        console.error(error);
-                      }
-                    }}
-                  >
-                    Automate Answer
-                  </Button>
-
-                  {faqStrings.map((faq, index) => (
-                    <Card key={index}>
-                      <p>{faq}</p>
-                      <Button
-                        onClick={() => {
-                          const updatedFaqs = [...faqStrings];
-                          updatedFaqs.splice(index, 1);
-                          setFaqStrings(updatedFaqs);
-                        }}
-                      >
-                        Delete
-                      </Button>
-                    </Card>
-                  ))}
-                  <input
-                    type="text"
-                    placeholder="Enter FAQ Document"
-                    onChange={(e) => setFaqString(e.target.value)}
-                  />
-                  <Button
-                    onClick={async () => {
-                      setFaqStrings([...faqStrings, faqString]); // Clear the input after saving
-                    }}
-                  >
-                    Save
-                  </Button>
-                  <Button
-                    onClick={async () => {
-                      const requestData = {
-                        documents: faqStrings,
-                      };
-                      // console.log(selectedProduct);
-                      try {
-                        const response = await fetch("/cx/addCorpusChunks", {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
-                          body: JSON.stringify(requestData),
-                        });
-                      } catch (error) {
-                        // Handle any errors
-                        console.error(error);
-                      }
-                    }}
-                  >
-                    Add to FAQ Bot
-                  </Button>
-
-                  {cxQueriesListDetails &&
-                    cxQueriesListDetails.map((query, index) => (
-                      <Card key={index}>
-                        <p>Query ID: {query.queryId}</p>
-                        <p>User ID: {query.userId}</p>
-                        <p>Query: {query.query}</p>
-                        <p>Answer: {query.answer}</p>
-                        <Checkbox
-                          checked={cxQueriesCheckbox.get(query.queryId)}
-                          onChange={() => {
-                            const updatedMap = new Map(cxQueriesCheckbox); // hella inefficient
-                            updatedMap.set(
-                              query.queryId,
-                              !cxQueriesCheckbox.get(query.queryId)
-                            );
-                            setcxQueriesCheckbox(updatedMap);
-                          }}
-                          label={undefined}
-                        />
-                      </Card>
-                    ))}
                 </>
               )}
 
-              {selectedTab === 4 &&
-                allUsersData.map((user, index) => (
-                  <div>
-                    <Card key={index}>
-                      <div style={{ padding: "16px" }}>
-                        <p>
-                          <strong>User ID:</strong> {user.userId}
-                        </p>
-                        {/* <p><strong>Name:</strong> {((user.userId in loaderData.usersMap) ? loaderData.usersMap[user.userId].name : "Error retrieveing name")}</p> */}
-                      </div>
-                      <div style={{ padding: "16px", marginTop: "2px" }}>
-                        <DataTable
-                          columnContentTypes={["text", "text", "text"]}
-                          headings={["Product ID", "Review IDs", "Queries"]}
-                          rows={loaderData.tableDataMap[user.userId].map(
-                            (row) => [
-                              row[0],
-                              <ul style={{ margin: 2, padding: 0 }}>
-                                {row[2].map((reviewId: string) => (
-                                  <p key={reviewId}>{reviewId}</p>
-                                ))}
-                              </ul>,
-                              <ul style={{ margin: 2, padding: 0 }}>
-                                {row[1].map((query: string) => (
-                                  <p key={query}>{query}</p>
-                                ))}
-                              </ul>,
-                            ] // Join reviews array with comma separator
-                          )}
-                        />
-                      </div>
-                    </Card>
-                  </div>
-                ))}
-
-              {selectedTab === 5 &&
-                reviewPromptDataTest &&
-                reviewPromptDataTest.map((reviewPrompt, reviewIndex) => (
-                  <Card>
-                    <div>
-                      <p>
-                        <strong>UserID:</strong> {reviewPrompt.userId}
-                      </p>
-                      <p>
-                        <strong>Name:</strong>{" "}
-                        {reviewPrompt.userId in loaderData.usersMap
-                          ? loaderData.usersMap[reviewPrompt.userId].name
-                          : "Error retrieveing name"}
-                      </p>
-                      <br />
-                      <p>
-                        <strong>Questions:</strong>
-                      </p>
-                      {reviewPrompt.questions.map((question, questionIndex) => (
-                        <input
-                          key={questionIndex}
-                          type="text"
-                          value={question}
-                          onChange={(e) =>
-                            handleQuestionChange(
-                              reviewIndex,
-                              questionIndex,
-                              e.target.value
-                            )
-                          }
-                          style={{
-                            width: "100%",
-                            padding: "8px",
-                            fontSize: "12px",
-                            border: "1px solid #ccc",
-                            borderRadius: "4px",
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <br />
-                    <Button>Send</Button>
-                  </Card>
-                ))}
+              {selectedTab === 4 && (
+                <Users
+                  allUsersData={allUsersData}
+                  loaderData={loaderData}
+                ></Users>
+              )}
             </Card>
           </Tabs>
         </div>

@@ -1,5 +1,12 @@
 import { RowDataPacket } from "mysql2/promise";
-import { Query, Review, Segment, User } from "../../globals";
+import {
+  Query,
+  Review,
+  Segment,
+  SupportTicket,
+  SupportTicketChat,
+  User,
+} from "../../globals";
 import { Chunk } from "../langchain/chunking";
 import { generateTableData } from "./misc";
 
@@ -270,4 +277,76 @@ export async function getSegments() {
   }
 
   return segments;
+}
+
+export async function getSupportTickets(status: string) {
+  const [response, bufff] = await singleStoreConnection.execute(
+    `
+        SELECT * FROM Customer_Support_Tickets
+        WHERE status = "${status}"
+      `
+  );
+  const tickets: SupportTicket[] = [];
+  for (const row of response as RowDataPacket[]) {
+    const ticket: SupportTicket = {
+      ticketId: row.ticketId,
+      customerId: row.customerId,
+      productId: row.productId,
+      email: row.email,
+      query: row.query,
+      status: row.status,
+      createdAt: row.createdAt,
+    };
+    tickets.push(ticket);
+  }
+
+  return tickets;
+}
+
+export async function getSupportTicketChats(ticketId: number) {
+  const [response, bufff] = await singleStoreConnection.execute(
+    `
+        SELECT * FROM Customer_Support_Tickets_Chats
+        WHERE ticketId = ${ticketId}
+      `
+  );
+  const chats: SupportTicketChat[] = [];
+  for (const row of response as RowDataPacket[]) {
+    const chat: SupportTicketChat = {
+      chatId: row.chatId,
+      ticketId: row.ticketId,
+      userId: row.userId,
+      email: row.email,
+      message: row.message,
+      createdAt: row.createdAt,
+    };
+    chats.push(chat);
+  }
+
+  return chats;
+}
+
+export async function getTicketFromToken(token: string) {
+  const [response, buff] = await singleStoreConnection.execute(
+    `
+        SELECT * FROM Customer_Support_Tickets
+        WHERE token = "${token}"
+      `
+  );
+  const row = response[0] as RowDataPacket;
+  if (!row) {
+    return null;
+  }
+  const ticket: SupportTicket = {
+    ticketId: row.ticketId,
+    customerId: row.customerId,
+    productId: row.productId,
+    email: row.email,
+    query: row.query,
+    status: row.status,
+    createdAt: row.createdAt,
+    tokenExpiration: row.tokenExpiration,
+  };
+
+  return ticket;
 }

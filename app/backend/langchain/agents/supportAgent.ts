@@ -46,7 +46,7 @@ export async function callSupportAgent(
 
     if (queryId !== undefined) {
       console.log("Calling semantic cache...");
-      const queries = await langchain_db.run(
+      const queries = await singleStoreConnection.execute(
         `
         SELECT queryId, userId, query, answer,
             DOT_PRODUCT(Query.semanticEmbedding, Customer_Support_Queries.semanticEmbedding) AS similarity_score
@@ -58,33 +58,32 @@ export async function callSupportAgent(
 
         `
       );
-
-      let filteredQueries = JSON.parse(queries).filter(
+      let filteredQueries = queries[0].filter(
         (query: any) => query.similarity_score > 0.6
       );
 
       console.log("Semantic Cache Results:" + filteredQueries.length + "\n");
 
       // run the agent to search over the faq corpus
-      console.log("Calling support agent...");
-      const faqChunks = await langchain_db.run(
-        `
-        SELECT Customer_Support_Corpus.documentId, Customer_Support_Corpus.chunkNumber, Customer_Support_Corpus.body,
-            DOT_PRODUCT(Customer_Support_Corpus.chunkEmbedding, Query.semanticEmbedding) AS similarity_score
-        FROM Customer_Support_Corpus
-        CROSS JOIN (SELECT semanticEmbedding FROM Customer_Support_Queries WHERE queryId = ${queryId}) AS Query
-        ORDER BY similarity_score DESC
-        LIMIT 25;
+      // console.log("Calling support agent...");
+      // const faqChunks = await singleStoreConnection.execute(
+      //   `
+      //   SELECT Customer_Support_Corpus.documentId, Customer_Support_Corpus.chunkNumber, Customer_Support_Corpus.body,
+      //       DOT_PRODUCT(Customer_Support_Corpus.chunkEmbedding, Query.semanticEmbedding) AS similarity_score
+      //   FROM Customer_Support_Corpus
+      //   CROSS JOIN (SELECT semanticEmbedding FROM Customer_Support_Queries WHERE queryId = ${queryId}) AS Query
+      //   ORDER BY similarity_score DESC
+      //   LIMIT 25;
 
-        `
-      );
+      //   `
+      // );
 
       // WHERE Customer_Support_Corpus.productId = ${productId}
 
-      let filteredChunks = JSON.parse(faqChunks).filter(
-        (chunk: any) => chunk.similarity_score > 0.4
-      );
-      console.log("Agent Results:" + filteredChunks.length + "\n");
+      // let filteredChunks = faqChunks[0].filter(
+      //   (chunk: any) => chunk.similarity_score > 0.4
+      // );
+      // console.log("Agent Results:" + filteredChunks.length + "\n");
       // console.log("Cache output " + filteredQueries + "\n");
       // console.log("Agent output " + filteredChunks);
 
@@ -105,18 +104,18 @@ export async function callSupportAgent(
       });
       htmlOutput += "</ul>";
 
-      htmlOutput += "<h2>FAQ Agent Output:</h2>";
-      htmlOutput += "<ul>";
-      filteredChunks.forEach((chunk: any) => {
-        htmlOutput += `<div style="overflow-x: auto;">`;
-        htmlOutput += `<div style="border: 1px solid black; padding: 10px; margin: 10px;">`;
-        htmlOutput += `<h3>Document ID: ${chunk.documentId}</h3>`;
-        htmlOutput += `<p>Chunk Number: ${chunk.chunkNumber}</p>`;
-        htmlOutput += `<p>Body: ${chunk.body}</p>`;
-        htmlOutput += `<p>Similarity Score: ${chunk.similarity_score}</p>`;
-        htmlOutput += `</div>`;
-        htmlOutput += `</div>`;
-      });
+      // htmlOutput += "<h2>FAQ Agent Output:</h2>";
+      // htmlOutput += "<ul>";
+      // filteredChunks.forEach((chunk: any) => {
+      //   htmlOutput += `<div style="overflow-x: auto;">`;
+      //   htmlOutput += `<div style="border: 1px solid black; padding: 10px; margin: 10px;">`;
+      //   htmlOutput += `<h3>Document ID: ${chunk.documentId}</h3>`;
+      //   htmlOutput += `<p>Chunk Number: ${chunk.chunkNumber}</p>`;
+      //   htmlOutput += `<p>Body: ${chunk.body}</p>`;
+      //   htmlOutput += `<p>Similarity Score: ${chunk.similarity_score}</p>`;
+      //   htmlOutput += `</div>`;
+      //   htmlOutput += `</div>`;
+      // });
       htmlOutput += "</ul>";
       return htmlOutput;
     }
@@ -140,6 +139,27 @@ export async function setAutomatedAnswer(queryIds: number[], answer: string) {
 
       console.log("Automated answer set.");
     }
+  } catch (err) {
+    console.error("ERROR", err);
+  }
+}
+
+export async function createNewTicket(
+  customerId: number,
+  productId: number,
+  email: string,
+  query: string
+) {
+  try {
+    await singleStoreConnection.execute(
+      `
+      INSERT INTO Customer_Support_Tickets (customerId, productId, email, query)
+      VALUES (?, ?, ?, ?)
+    `,
+      [customerId, productId, email, query]
+    );
+
+    console.log("New ticket created.");
   } catch (err) {
     console.error("ERROR", err);
   }

@@ -1,6 +1,8 @@
 import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
+import { useParams } from "@remix-run/react";
 import { callCatalogSearchAgent } from "~/backend/langchain/agents/catalogSearchAgent";
 import { callSupportAgent } from "~/backend/langchain/agents/supportAgent";
+import { addSupportTicket } from "~/backend/vectordb/add";
 import { authenticate } from "~/shopify.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -36,10 +38,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
     return {
       text: "",
-      html:
-        JSON.stringify(result?.htmlString)
-        // JSON.stringify(result?.productDescriptionOutput) +
-        // JSON.stringify(result?.reviewsOutput),
+      html: JSON.stringify(result?.htmlString),
+      // JSON.stringify(result?.productDescriptionOutput) +
+      // JSON.stringify(result?.reviewsOutput),
     };
   } else if (searchType == "product") {
     const result = await callCatalogSearchAgent(
@@ -52,10 +53,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     return {
       text: "",
-      html:
-        result?.htmlString
-        // JSON.stringify(result?.productDescriptionOutput) +
-        // JSON.stringify(result?.reviewsOutput),
+      html: result?.htmlString,
+      // JSON.stringify(result?.productDescriptionOutput) +
+      // JSON.stringify(result?.reviewsOutput),
     };
   } else if (searchType == "support") {
     const result = await callSupportAgent(
@@ -71,6 +71,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     };
   } else if (searchType == "ticket") {
     // TODO: Implement ticketing system
+    await addSupportTicket(customerId, productId, email, agentQuery);
     return {
       text: "Got it. You can sit back and relax now. I went ahead and submitted a ticket for you with all the relevant information. Someone from our team will get back to you shortly.",
       html: "",

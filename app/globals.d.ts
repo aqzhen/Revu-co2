@@ -56,6 +56,27 @@ export type Segment = {
   userIds: number[];
 };
 
+export type SupportTicket = {
+  ticketId: number;
+  customerId: number;
+  productId: number;
+  email: string;
+  query: string;
+  status: "open" | "closed";
+  createdAt: string;
+  token?: string;
+  tokenExpiration?: string;
+};
+
+export type SupportTicketChat = {
+  chatId: number;
+  ticketId: number;
+  userId: number;
+  email: string;
+  message: string;
+  createdAt: string;
+};
+
 // Define custom equality function for ReviewPrompt based on userId
 function isEqual(review1: ReviewPrompt, review2: ReviewPrompt): boolean {
   return review1.userId === review2.userId;
@@ -68,10 +89,10 @@ function getHashCode(review: ReviewPrompt): string {
 
 declare global {
   var admin: any;
-  var dataSource: DataSource;
-  var langchain_db: SqlDatabase;
-  var toolkit: SqlToolkit;
-  var tools: Tools;
+  // var dataSource: DataSource;
+  // var langchain_db: SqlDatabase;
+  // var toolkit: SqlToolkit;
+  // var tools: Tools;
   var singleStoreConnection: SingleStoreConnection;
 }
 

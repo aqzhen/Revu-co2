@@ -38,6 +38,15 @@ export default defineConfig({
   server: {
     port: Number(process.env.PORT || 3000),
     hmr: hmrConfig,
+    proxy: {
+      "/cx/chats/": {
+        target: process.env.SHOPIFY_APP_URL,
+        changeOrigin: true,
+        rewrite: (path) => {
+          return path.replace(/^\/cx\/chats/, "apps/my_app/cx/chats");
+        },
+      },
+    },
   },
   plugins: [
     remix({
