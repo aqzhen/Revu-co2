@@ -261,6 +261,7 @@ export async function createSegmentsTable(deleteExisting: boolean) {
     await singleStoreConnection.execute(`
                 CREATE TABLE Segments (
                     segmentId BIGINT AUTO_INCREMENT PRIMARY KEY,
+                    segmentName TEXT,
                     purchaseStatus TEXT,
                     productId BIGINT,
                     semanticSegmentReview TEXT,

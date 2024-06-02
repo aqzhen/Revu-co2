@@ -1,7 +1,7 @@
 declare module "*.css";
 
 export type User = {
-  userId: number;
+  userId?: number;
   name: string;
   email?: string;
   createdAt?: string;
@@ -45,6 +45,7 @@ export enum PurchaseStatus {
 
 export type Segment = {
   segmentId?: number;
+  segmentName?: string;
   purchaseStatus: PurchaseStatus;
   productId: number;
   semanticSegmentReview: string;

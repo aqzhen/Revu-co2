@@ -512,6 +512,7 @@ export async function addSegment(segment: Segment) {
     await singleStoreConnection.execute(
       `
       INSERT IGNORE INTO Segments (
+          segmentName
           purchaseStatus,
           productId,
           semanticSegmentReview,
@@ -522,6 +523,7 @@ export async function addSegment(segment: Segment) {
           overCxQueries,
           userIds
       ) VALUES (
+          '${segment.segmentName}',
           ${!segment.purchaseStatus ? -1 : segment.purchaseStatus},
           ${segment.productId},
           '${segment.semanticSegmentReview}',

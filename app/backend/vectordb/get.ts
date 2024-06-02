@@ -238,7 +238,6 @@ export async function getUserProfileDetails(userId: number) {
       `
   );
 
-  console.log(userId);
   const row = response[0] as RowDataPacket;
   if (!row) {
     return null;
@@ -250,7 +249,7 @@ export async function getUserProfileDetails(userId: number) {
     createdAt: row.accountCreated,
   };
 
-  return { user: user };
+  return user;
 }
 
 export async function getSegments() {
@@ -271,7 +270,7 @@ export async function getSegments() {
       overReviews: row.overReviews,
       overQueries: row.overQueries,
       overCxQueries: row.overCxQueries,
-      userIds: row.userIds,
+      userIds: JSON.parse(row.userIds),
     };
     segments.push(segment);
   }

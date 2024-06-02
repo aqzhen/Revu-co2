@@ -7,6 +7,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export const action = async ({ request }: ActionFunctionArgs) => {
   const body = await request.json();
   const {
+    segmentName,
     purchaseStatus,
     productId,
     semanticSegmentReview,
@@ -18,6 +19,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   } = body;
   return await createSegment(
     purchaseStatus,
+    segmentName,
     productId,
     semanticSegmentReview,
     semanticSegmentQuery,

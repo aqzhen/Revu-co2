@@ -11,6 +11,7 @@ export enum PurchaseStatus {
 
 export async function createSegment(
   purchaseStatus: PurchaseStatus,
+  segmentName: string,
   productId: number = -1,
   semanticSegmentReview: string,
   semanticSegmentQuery: string,
@@ -127,6 +128,7 @@ export async function createSegment(
 
   const segment: Segment = {
     purchaseStatus,
+    segmentName,
     productId,
     semanticSegmentReview,
     semanticSegmentQuery,

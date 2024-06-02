@@ -21,6 +21,7 @@ export function Stratify() {
   const [purchaseStatus, setPurchaseStatus] = useState<string[] | undefined>(
     undefined
   );
+  const [segmentName, setSegmentName] = useState<string | undefined>(undefined);
   const [productId, setProductId] = useState<string | undefined>(undefined);
   const [segmentReviews, setSegmentReviews] = useState<string | undefined>(
     undefined
@@ -108,6 +109,7 @@ export function Stratify() {
           : purchaseStatus![0] == "Abandoned Cart"
             ? 1
             : 0,
+      segmentName: segmentName,
       productId: productId,
       semanticSegmentReview: segmentReviews,
       semanticSegmentQuery: segmentQueries,
@@ -149,8 +151,8 @@ export function Stratify() {
 
       const data = await response.json();
 
-      if (data && data.user) {
-        const customer: User = data.user;
+      if (data) {
+        const customer: User = data;
 
         setSegmentCustomers((prevSegmentCustomers) => [
           ...(prevSegmentCustomers || []),
@@ -303,6 +305,11 @@ export function Stratify() {
     <div>
       <Card>
         <button onClick={handleSearch}>Find Segment</button>
+        <input
+          type="text"
+          placeholder="Enter Segment Name"
+          onChange={(e) => setSegmentName(e.target.value)}
+        />
         <button onClick={handleSaveSegment}>Save Segment</button>
         <ResourceList
           resourceName={{ singular: "customer", plural: "customers" }}
